@@ -1,5 +1,20 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import mermaid from "mermaid";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
+// @ts-expect-error
+import htmlDocx from "html-docx-js/dist/html-docx";
+
+const accent = "#2563eb"; // azul
+const bg = "#181a20";
+const panel = "#23262f";
+const text = "#f3f4f6";
+const border = "#313442";
+const shadow = "0 2px 16px 0 rgba(0,0,0,0.15)";
+const radius = "12px";
+const font = "'Inter', 'Segoe UI', Arial, sans-serif";
 
 export default function Home() {
   const [files, setFiles] = useState<string[]>([]);
@@ -9,6 +24,39 @@ export default function Home() {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [iaResult, setIaResult] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mermaidBlocks, setMermaidBlocks] = useState<{id: string, code: string}[]>([]);
+  const mermaidRefs = useRef<{[id: string]: HTMLDivElement | null}>({});
+
+  useEffect(() => {
+    // Detectar y renderizar bloques Mermaid en la respuesta de la IA
+    if (iaResult) {
+      const regex = /```mermaid\\n([\s\S]*?)```/g;
+      let match;
+      const blocks: {id: string, code: string}[] = [];
+      let i = 0;
+      while ((match = regex.exec(iaResult)) !== null) {
+        blocks.push({ id: `mermaid-block-${i++}`, code: match[1] });
+      }
+      setMermaidBlocks(blocks);
+    } else {
+      setMermaidBlocks([]);
+    }
+  }, [iaResult]);
+
+  useEffect(() => {
+    // Renderizar los diagramas Mermaid
+    mermaidBlocks.forEach(block => {
+      if (mermaidRefs.current[block.id]) {
+        try {
+          (mermaid.render(block.id + "-svg", block.code, (svgCode: any) => {
+            if (mermaidRefs.current[block.id]) {
+              mermaidRefs.current[block.id]!.innerHTML = svgCode;
+            }
+          }) as unknown) as void;
+        } catch {}
+      }
+    });
+  }, [mermaidBlocks]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,51 +95,114 @@ export default function Home() {
     );
   };
 
+  // Eliminar bloques Mermaid del Markdown para evitar doble render
+  const markdownWithoutMermaid = iaResult.replace(/```mermaid[\s\S]*?```/g, "");
+
+  // Función para descargar como Markdown ZIP
+  const handleDownloadMarkdownZip = async () => {
+    const zip = new JSZip();
+    zip.file("documentacion.md", iaResult);
+    const blob = await zip.generateAsync({ type: "blob" });
+    saveAs(blob, "documentacion.zip");
+  };
+
+  // Función para descargar como HTML
+  const handleDownloadHTML = () => {
+    const html = `<!DOCTYPE html><html><head><meta charset='utf-8'><title>Documentación</title></head><body>${markdownWithoutMermaid}</body></html>`;
+    const blob = new Blob([html], { type: "text/html" });
+    saveAs(blob, "documentacion.html");
+  };
+
+  // Función para descargar como Word
+  const handleDownloadWord = () => {
+    const html = `<h1>Documentación</h1>${markdownWithoutMermaid.replace(/\n/g, '<br>')}`;
+    const docx = htmlDocx.asBlob(html);
+    saveAs(docx, "documentacion.docx");
+  };
+
+  // Función para descargar como PDF (usando print-to-pdf del navegador)
+  const handleDownloadPDF = () => {
+    const printWindow = window.open('', '', 'width=800,height=600');
+    if (printWindow) {
+      printWindow.document.write(`<!DOCTYPE html><html><head><meta charset='utf-8'><title>Documentación</title></head><body>${markdownWithoutMermaid}</body></html>`);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    }
+  };
+
   return (
-    <main style={{ maxWidth: 700, margin: "2rem auto", fontFamily: "sans-serif" }}>
-      <h1>docForge</h1>
-      <h2>Sube tu proyecto (ZIP)</h2>
-      <form onSubmit={handleUpload} style={{ marginBottom: 20 }}>
-        <input type="file" accept=".zip" onChange={e => setZip(e.target.files?.[0] || null)} />
-        <button type="submit" disabled={loading || !zip}>Subir y analizar</button>
-      </form>
-      {files.length > 0 && (
-        <div>
-          <h3>Archivos extraídos:</h3>
-          <ul>
-            {files.map(f => (
-              <li key={f}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={selectedFiles.includes(f)}
-                    onChange={() => handleFileSelect(f)}
-                  />
-                  {f}
-                </label>
-              </li>
-            ))}
-          </ul>
-          <small>Selecciona archivos si quieres limitar la consulta. Si no seleccionas nada, la IA analizará todo el proyecto.</small>
+    <main style={{ minHeight: "100vh", background: bg, color: text, fontFamily: font, padding: 0, margin: 0 }}>
+      <div style={{ maxWidth: 800, margin: "2rem auto", padding: 24 }}>
+        <h1 style={{ color: accent, fontWeight: 800, fontSize: 36, letterSpacing: -1, marginBottom: 8 }}>docForge</h1>
+        <div style={{ background: panel, borderRadius: radius, boxShadow: shadow, padding: 28, marginBottom: 32, border: `1px solid ${border}` }}>
+          <h2 style={{ marginTop: 0, color: accent, fontSize: 22 }}>Sube tu proyecto <span style={{ color: text, fontWeight: 400 }}>(ZIP)</span></h2>
+          <form onSubmit={handleUpload} style={{ marginBottom: 20, display: "flex", gap: 12, alignItems: "center" }}>
+            <input type="file" accept=".zip" onChange={e => setZip(e.target.files?.[0] || null)} style={{ color: text, background: panel, border: `1px solid ${border}`, borderRadius: 6, padding: 6 }} />
+            <button type="submit" disabled={loading || !zip} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "8px 18px", fontWeight: 600, fontSize: 16, cursor: loading || !zip ? "not-allowed" : "pointer", opacity: loading || !zip ? 0.6 : 1 }}>Subir y analizar</button>
+          </form>
+          {files.length > 0 && (
+            <div style={{ marginTop: 18 }}>
+              <h3 style={{ margin: 0, fontSize: 18, color: accent }}>Archivos extraídos:</h3>
+              <ul style={{ columns: 2, margin: "10px 0 0 0", padding: 0, listStyle: "none" }}>
+                {files.map(f => (
+                  <li key={f} style={{ marginBottom: 4 }}>
+                    <label style={{ cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedFiles.includes(f)}
+                        onChange={() => handleFileSelect(f)}
+                        style={{ accentColor: accent, marginRight: 6 }}
+                      />
+                      <span style={{ fontSize: 15 }}>{f}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              <small style={{ color: "#b3b8c5" }}>Selecciona archivos si quieres limitar la consulta. Si no seleccionas nada, la IA analizará todo el proyecto.</small>
+            </div>
+          )}
         </div>
-      )}
-      <hr style={{ margin: "2rem 0" }} />
-      <h2>Interactúa con la IA</h2>
-      <form onSubmit={handleAskIA}>
-        <label>
-          Instrucción (ej: "Genera un README general", "Documenta todos los endpoints", "Explica la estructura del proyecto"):<br />
-          <input style={{ width: "100%" }} value={prompt} onChange={e => setPrompt(e.target.value)} required />
-        </label>
-        <br />
-        <button type="submit" disabled={loading || !extractPath || !prompt}>Enviar a IA</button>
-      </form>
-      {loading && <p>Procesando...</p>}
-      {iaResult && (
-        <div style={{ marginTop: 20 }}>
-          <h3>Respuesta de la IA:</h3>
-          <pre style={{ background: "#f4f4f4", padding: 10 }}>{iaResult}</pre>
+        <div style={{ background: panel, borderRadius: radius, boxShadow: shadow, padding: 28, marginBottom: 32, border: `1px solid ${border}` }}>
+          <h2 style={{ marginTop: 0, color: accent, fontSize: 22 }}>Interactúa con la IA</h2>
+          <form onSubmit={handleAskIA} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <label style={{ fontWeight: 500, fontSize: 16 }}>
+              Instrucción <span style={{ color: "#b3b8c5", fontWeight: 400 }}>(ej: "Genera un README general", "Documenta todos los endpoints", "Explica la estructura del proyecto")</span>:
+              <input style={{ width: "100%", marginTop: 6, background: bg, color: text, border: `1px solid ${border}`, borderRadius: 6, padding: 10, fontSize: 16, marginBottom: 0 }} value={prompt} onChange={e => setPrompt(e.target.value)} required />
+            </label>
+            <button type="submit" disabled={loading || !extractPath || !prompt} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "10px 0", fontWeight: 700, fontSize: 17, cursor: loading || !extractPath || !prompt ? "not-allowed" : "pointer", opacity: loading || !extractPath || !prompt ? 0.6 : 1 }}>Enviar a IA</button>
+          </form>
+          {loading && <p style={{ color: accent, marginTop: 18 }}>Procesando...</p>}
         </div>
-      )}
+        {iaResult && (
+          <div style={{ background: panel, borderRadius: radius, boxShadow: shadow, padding: 28, marginBottom: 32, border: `1px solid ${border}` }}>
+            <h3 style={{ color: accent, fontSize: 20, marginTop: 0 }}>Documentación generada:</h3>
+            {/* Botones de exportación */}
+            <div style={{ marginBottom: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button onClick={handleDownloadMarkdownZip} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 600, fontSize: 15, cursor: "pointer" }}>Descargar ZIP (Markdown)</button>
+              <button onClick={handleDownloadHTML} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 600, fontSize: 15, cursor: "pointer" }}>Descargar HTML</button>
+              <button onClick={handleDownloadWord} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 600, fontSize: 15, cursor: "pointer" }}>Descargar Word</button>
+              <button onClick={handleDownloadPDF} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 600, fontSize: 15, cursor: "pointer" }}>Descargar PDF</button>
+            </div>
+            {/* Renderizar Markdown (sin bloques Mermaid) */}
+            <div style={{ background: bg, borderRadius: 8, padding: 18, marginBottom: 18, border: `1px solid ${border}` }}>
+              <ReactMarkdown>{markdownWithoutMermaid}</ReactMarkdown>
+            </div>
+            {/* Renderizar diagramas Mermaid */}
+            {mermaidBlocks.length > 0 && (
+              <div style={{ marginTop: 30 }}>
+                <h4 style={{ color: accent, fontSize: 17 }}>Diagramas generados:</h4>
+                {mermaidBlocks.map(block => (
+                  <div key={block.id} style={{ margin: '1rem 0', background: bg, padding: 10, borderRadius: 8, border: `1px solid ${border}` }}>
+                    <div ref={el => { mermaidRefs.current[block.id] = el; }} />
+                    <pre style={{ fontSize: 12, color: '#888', marginTop: 8 }}>{block.code}</pre>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </main>
   );
 }

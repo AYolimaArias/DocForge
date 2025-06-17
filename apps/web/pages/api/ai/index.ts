@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
-import { OpenAIApi, Configuration } from 'openai';
 
 function getAllFiles(dir: string, exts: string[] = ['.js', '.ts', '.jsx', '.tsx', '.py']): string[] {
   let results: string[] = [];
@@ -18,8 +17,6 @@ function getAllFiles(dir: string, exts: string[] = ['.js', '.ts', '.jsx', '.tsx'
   });
   return results;
 }
-
-const openai = new OpenAIApi(new Configuration({ apiKey: process.env.OPENAI_API_KEY }));
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -41,15 +38,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } catch {}
     }
     const fullPrompt = `${prompt}\n\n${code}`;
-    const completion = await openai.createChatCompletion({
-      model,
-      messages: [
-        { role: 'system', content: 'Eres un experto en documentación de software y análisis de código.' },
-        { role: 'user', content: fullPrompt }
-      ],
-      max_tokens: 1024
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'No se encontró la API Key de OpenAI' });
+    }
+    const completionRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: 'Eres un experto en documentación de software y análisis de código.' },
+          { role: 'user', content: fullPrompt }
+        ],
+        max_tokens: 1024
+      })
     });
-    return res.status(200).json({ result: completion.data.choices[0].message?.content });
+    if (!completionRes.ok) {
+      const error = await completionRes.json();
+      return res.status(500).json({ error: error.error?.message || 'Error al consultar la IA' });
+    }
+    const completion = await completionRes.json();
+    return res.status(200).json({ result: completion.choices[0].message?.content });
   } catch (e: any) {
     return res.status(500).json({ error: e.message || 'Error al consultar la IA' });
   }

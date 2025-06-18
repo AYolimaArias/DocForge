@@ -6,6 +6,7 @@ import JSZip from "jszip";
 import { saveAs } from "file-saver";
 // @ts-expect-error
 import htmlDocx from "html-docx-js/dist/html-docx";
+import TreeView from 'react-treeview';
 
 const accent = "#2563eb"; // azul
 const bg = "#181a20";
@@ -131,6 +132,30 @@ export default function Home() {
     }
   };
 
+  // Función para construir la estructura de árbol a partir de la lista de archivos
+  function buildTree(files: string[]): any[] {
+    const root: any = {};
+    files.forEach(file => {
+      const parts = file.split('/');
+      let current = root;
+      parts.forEach((part, i) => {
+        if (!current[part]) current[part] = (i === parts.length - 1) ? null : {};
+        current = current[part];
+      });
+    });
+    function toTree(obj: any, prefix = ''): any[] {
+      return Object.entries(obj).map(([key, value]) => {
+        const path = prefix ? `${prefix}/${key}` : key;
+        if (value === null) {
+          return { label: key, value: path, children: null };
+        } else {
+          return { label: key, value: path, children: toTree(value, path) };
+        }
+      });
+    }
+    return toTree(root);
+  }
+
   return (
     <main style={{ minHeight: "100vh", background: bg, color: text, fontFamily: font, padding: 0, margin: 0 }}>
       <div style={{ maxWidth: 800, margin: "2rem auto", padding: 24 }}>
@@ -144,21 +169,29 @@ export default function Home() {
           {files.length > 0 && (
             <div style={{ marginTop: 18 }}>
               <h3 style={{ margin: 0, fontSize: 18, color: accent }}>Archivos extraídos:</h3>
-              <ul style={{ columns: 2, margin: "10px 0 0 0", padding: 0, listStyle: "none" }}>
-                {files.map(f => (
-                  <li key={f} style={{ marginBottom: 4 }}>
-                    <label style={{ cursor: "pointer" }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedFiles.includes(f)}
-                        onChange={() => handleFileSelect(f)}
-                        style={{ accentColor: accent, marginRight: 6 }}
-                      />
-                      <span style={{ fontSize: 15 }}>{f}</span>
-                    </label>
-                  </li>
+              <div style={{ background: bg, borderRadius: 8, padding: 12, border: `1px solid ${border}` }}>
+                {buildTree(files).map((node, i) => (
+                  <TreeView key={i} nodeLabel={node.label} defaultCollapsed={false}>
+                    {node.children ? node.children.map((child: any, j: number) => (
+                      <TreeView key={j} nodeLabel={child.label} defaultCollapsed={true}>
+                        {child.children ? child.children.map((leaf: any, k: number) => (
+                          <div key={k} style={{ marginLeft: 16 }}>
+                            <label style={{ cursor: "pointer" }}>
+                              <input
+                                type="checkbox"
+                                checked={selectedFiles.includes(leaf.value)}
+                                onChange={() => handleFileSelect(leaf.value)}
+                                style={{ accentColor: accent, marginRight: 6 }}
+                              />
+                              <span style={{ fontSize: 15 }}>{leaf.label}</span>
+                            </label>
+                          </div>
+                        )) : null}
+                      </TreeView>
+                    )) : null}
+                  </TreeView>
                 ))}
-              </ul>
+              </div>
               <small style={{ color: "#b3b8c5" }}>Selecciona archivos si quieres limitar la consulta. Si no seleccionas nada, la IA analizará todo el proyecto.</small>
             </div>
           )}

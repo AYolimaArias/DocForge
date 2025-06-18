@@ -24,6 +24,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
+    "react-treeview": "^0.4.7",
     "tree-sitter": "^0.25.0",
     "ts-morph": "^26.0.0"
   },
@@ -35,6 +36,7 @@
     "@types/node": "^20.19.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-treeview": "^0.4.6",
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
     "typescript": "^5"

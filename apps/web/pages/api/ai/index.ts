@@ -2,7 +2,12 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
-function getAllFiles(dir: string, exts: string[] = ['.js', '.ts', '.jsx', '.tsx', '.py']): string[] {
+// Ampliar soporte de lenguajes
+const SUPPORTED_EXTS = [
+  '.js', '.ts', '.jsx', '.tsx', '.py', '.java', '.php', '.cs', '.rb', '.go', '.c', '.cpp', '.h', '.swift', '.kt'
+];
+
+function getAllFiles(dir: string, exts: string[] = SUPPORTED_EXTS): string[] {
   let results: string[] = [];
   if (!fs.existsSync(dir)) return results;
   const list = fs.readdirSync(dir);

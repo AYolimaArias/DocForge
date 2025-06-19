@@ -10,6 +10,7 @@ import TreeView from 'react-treeview';
 import NextAuth from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { FiUpload, FiGithub, FiRefreshCw, FiFolder, FiInfo } from 'react-icons/fi';
 
 const accent = "#2563eb"; // azul
 const bg = "#181a20";
@@ -324,7 +325,7 @@ export default function Home() {
     } else {
       // Es una carpeta
       return (
-        <TreeView key={node.value} nodeLabel={<span>📁 {node.label}</span>} defaultCollapsed={false}>
+        <TreeView key={node.value} nodeLabel={<span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><FiFolder size={18} color="var(--accent)" /> {node.label}</span>} defaultCollapsed={false}>
           {node.children.map((child: any) => renderFileTreeWithFolderIcon(child))}
         </TreeView>
       );
@@ -356,7 +357,7 @@ export default function Home() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: bg, color: text, fontFamily: font, padding: 0, margin: 0, display: 'flex' }}>
+    <main style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)", fontFamily: font, padding: 0, margin: 0, display: 'flex' }}>
       {/* Panel de usuario arriba a la derecha */}
       <div style={{ position: "absolute", top: 20, right: 30, zIndex: 100, display: 'flex', gap: 12, alignItems: 'center' }}>
         {session ? (
@@ -371,43 +372,30 @@ export default function Home() {
                   borderRadius: '50%',
                   objectFit: 'cover',
                   marginRight: 10,
-                  border: `2px solid ${accent}`,
+                  border: '2px solid var(--accent)',
                   verticalAlign: 'middle',
                 }}
               />
             )}
             <span style={{ marginRight: 10, verticalAlign: 'middle' }}>{session.user?.name || session.user?.email}</span>
-            <button onClick={() => signOut()} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontWeight: 600, cursor: "pointer" }}>Cerrar sesión</button>
+            <button className="btn" onClick={() => signOut()}>Cerrar sesión</button>
           </div>
         ) : (
-          <button onClick={() => signIn("github")}
-            style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontWeight: 600, cursor: "pointer" }}>
-            Iniciar sesión con GitHub
-          </button>
+          <button className="btn" onClick={() => signIn("github")}>Iniciar sesión con GitHub</button>
         )}
       </div>
       {/* Menú lateral: historial de documentos generados */}
-      <aside style={{ width: 260, background: panel, borderRight: `1px solid ${border}`, padding: 24, minHeight: '100vh' }}>
+      <aside className="sidebar">
         <button
           onClick={handleNuevoProyecto}
           disabled={files.length === 0 && documentos.length === 0 && !selectedRepo}
-          style={{
-            background: accent,
-            color: '#fff',
-            border: 'none',
-            borderRadius: 6,
-            padding: '10px 0',
-            fontWeight: 700,
-            width: '100%',
-            marginBottom: 18,
-            cursor: (files.length === 0 && documentos.length === 0 && !selectedRepo) ? 'not-allowed' : 'pointer',
-            opacity: (files.length === 0 && documentos.length === 0 && !selectedRepo) ? 0.5 : 1,
-            fontSize: 16,
-          }}
+          className="btn"
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8 }}
         >
-          Iniciar nuevo proyecto
+          <FiRefreshCw size={20} />
+          Nuevo proyecto
         </button>
-        <h2 style={{ color: accent, fontSize: 22, marginTop: 0, marginBottom: 18 }}>Documentos generados</h2>
+        <h2>Documentos generados</h2>
         {documentos.length === 0 ? (
           <p style={{ color: '#b3b8c5' }}>Aún no has generado documentos.</p>
         ) : (
@@ -422,8 +410,8 @@ export default function Home() {
                 <li key={doc.id} style={{ marginBottom: 12 }}>
                   <button
                     style={{
-                      background: docSeleccionado?.id === doc.id ? accent : 'transparent',
-                      color: docSeleccionado?.id === doc.id ? '#fff' : text,
+                      background: docSeleccionado?.id === doc.id ? 'var(--accent)' : 'transparent',
+                      color: docSeleccionado?.id === doc.id ? '#fff' : 'var(--text)',
                       border: 'none',
                       borderRadius: 6,
                       padding: '8px 12px',
@@ -434,6 +422,8 @@ export default function Home() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 8,
+                      boxShadow: docSeleccionado?.id === doc.id ? '0 2px 8px 0 rgba(37,99,235,0.08)' : 'none',
+                      transition: 'background 0.18s, color 0.18s',
                     }}
                     onClick={() => setDocSeleccionado(doc)}
                   >
@@ -444,7 +434,8 @@ export default function Home() {
                   <div style={{ marginTop: 2, marginLeft: 4 }}>
                     <small style={{ color: '#b3b8c5' }}>{doc.fecha.toLocaleString()}</small>
                     <button
-                      style={{ marginLeft: 8, color: accent, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}
+                      className="btn"
+                      style={{ marginLeft: 8, background: 'none', color: 'var(--accent)', border: 'none', padding: 0, fontSize: 13, boxShadow: 'none' }}
                       onClick={() => {
                         // Descargar el documento
                         if (doc.tipo === 'markdown') {
@@ -472,45 +463,60 @@ export default function Home() {
       </aside>
       {/* Panel principal */}
       <div style={{ flex: 1, padding: 32, maxWidth: 900, margin: '0 auto' }}>
-        <h1 style={{ color: accent, fontWeight: 800, fontSize: 36, letterSpacing: -1, marginBottom: 8 }}>docForge</h1>
+        <h1 style={{ color: 'var(--accent)', fontWeight: 800, fontSize: 36, letterSpacing: -1, marginBottom: 8 }}>docForge</h1>
         {/* Panel superior: subir ZIP o analizar repo GitHub */}
-        <div style={{ background: panel, borderRadius: radius, boxShadow: shadow, padding: 28, marginBottom: 32, border: `1px solid ${border}` }}>
-          <h2 style={{ marginTop: 0, color: accent, fontSize: 22, marginBottom: 18 }}>Sube tu proyecto <span style={{ color: text, fontWeight: 400 }}>(ZIP)</span> o analiza un repositorio de GitHub</h2>
+        <div className="panel">
+          <h2 style={{ marginTop: 0, color: 'var(--accent)', fontSize: 22, marginBottom: 18 }}>Sube tu proyecto <span style={{ color: 'var(--text)', fontWeight: 400 }}>(ZIP)</span> o analiza un repositorio de GitHub</h2>
           <form onSubmit={handleUpload} style={{ marginBottom: 20, display: "flex", gap: 12, alignItems: "center" }}>
-            <input type="file" accept=".zip" onChange={e => setZip(e.target.files?.[0] || null)} style={{ color: text, background: panel, border: `1px solid ${border}`, borderRadius: 6, padding: 6 }} />
-            <button type="submit" disabled={loading || !zip} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "8px 18px", fontWeight: 600, fontSize: 16, cursor: loading || !zip ? "not-allowed" : "pointer", opacity: loading || !zip ? 0.6 : 1 }}>Subir y analizar</button>
+            <input
+              type="file"
+              accept=".zip"
+              id="file-upload"
+              style={{ display: "none" }}
+              onChange={e => setZip(e.target.files?.[0] || null)}
+            />
+            <label htmlFor="file-upload" className="file-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <FiUpload size={20} />
+              {zip ? zip.name : "Seleccionar archivo ZIP"}
+            </label>
+            {zip && (
+              <button className="btn" type="submit">Subir y analizar</button>
+            )}
           </form>
           {session && (
             <div style={{ marginBottom: 16 }}>
-              <button onClick={fetchRepos} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "8px 18px", fontWeight: 600, fontSize: 16, cursor: "pointer" }}>
+              <button className="file-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={fetchRepos}>
+                <FiGithub size={20} />
                 Analizar repositorio de GitHub
               </button>
             </div>
           )}
           {showRepoSelector && (
-            <div style={{ margin: '16px 0', background: panel, padding: 18, borderRadius: 8, border: `1px solid ${border}` }}>
-              <label style={{ fontWeight: 500, fontSize: 16, marginRight: 10 }}>Selecciona un repositorio:</label>
-              <select value={selectedRepo} onChange={e => handleRepoSelect(e.target.value)} style={{ padding: 8, borderRadius: 8, border: `1px solid ${border}`, marginBottom: 16, width: 340 }}>
-                <option value="">-- Selecciona --</option>
-                {Array.isArray(repos) && repos.map((repo: any) => (
-                  <option key={repo.id} value={repo.full_name}>{repo.full_name}</option>
-                ))}
-              </select>
-              <button onClick={() => setShowRepoSelector(false)} style={{ marginLeft: 10, background: "#444", color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 600, fontSize: 15, cursor: "pointer" }}>
-                Cancelar
-              </button>
+            <div className="panel" style={{ margin: '16px 0', padding: 18, borderRadius: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                <label style={{ fontWeight: 500, fontSize: 16 }}>Selecciona un repositorio:</label>
+                <select value={selectedRepo} onChange={e => handleRepoSelect(e.target.value)} style={{ width: 340 }}>
+                  <option value="">-- Selecciona --</option>
+                  {Array.isArray(repos) && repos.map((repo: any) => (
+                    <option key={repo.id} value={repo.full_name}>{repo.full_name}</option>
+                  ))}
+                </select>
+                <button className="file-btn" style={{ minWidth: 'unset', padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => setShowRepoSelector(false)}>
+                  Cancelar
+                </button>
+              </div>
             </div>
           )}
           {error && (
-            <div style={{ color: "#ff4d4f", marginTop: 10, fontWeight: 600 }}>{error}</div>
+            <div className="alert-error">{error}</div>
           )}
           {loading && (
-            <div style={{ color: accent, marginTop: 10, fontWeight: 600 }}>Procesando...</div>
+            <div className="loader" />
           )}
           {files.length > 0 && (
             <div style={{ marginTop: 18 }}>
-              <h3 style={{ margin: 0, fontSize: 18, color: accent, marginBottom: 18 }}>Archivos extraídos:</h3>
-              <div style={{ background: bg, borderRadius: 8, padding: 12, border: `1px solid ${border}`, maxHeight: 320, overflowY: 'auto' }}>
+              <h3 style={{ margin: 0, fontSize: 18, color: 'var(--accent)', marginBottom: 18 }}>Archivos extraídos:</h3>
+              <div className="panel" style={{ background: 'var(--bg)', borderRadius: 8, padding: 12, border: `1px solid var(--border)`, maxHeight: 320, overflowY: 'auto', marginBottom: 0 }}>
                 {buildTree(files).length > 0 ? (
                   buildTree(files).map((node, i) => renderFileTreeWithFolderIcon(node))
                 ) : (
@@ -522,8 +528,8 @@ export default function Home() {
           )}
         </div>
         {/* Fin panel superior */}
-        <div style={{ background: panel, borderRadius: radius, boxShadow: shadow, padding: 28, marginBottom: 32, border: `1px solid ${border}` }}>
-          <h2 style={{ marginTop: 0, color: accent, fontSize: 22, marginBottom: 18 }}>Interactúa con la IA</h2>
+        <div className="panel">
+          <h2 style={{ marginTop: 0, color: 'var(--accent)', fontSize: 22, marginBottom: 18 }}>Interactúa con la IA</h2>
           <form onSubmit={handleAskIA} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <label style={{ fontWeight: 500, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
               Instrucción
@@ -531,8 +537,7 @@ export default function Home() {
                 <span
                   style={{
                     cursor: 'pointer',
-                    color: accent,
-                    fontSize: 18,
+                    color: 'var(--accent)',
                     borderRadius: '50%',
                     width: 22,
                     height: 22,
@@ -543,7 +548,7 @@ export default function Home() {
                   }}
                   tabIndex={0}
                 >
-                  ℹ️
+                  <FiInfo size={18} />
                 </span>
                 <span
                   style={{
@@ -570,13 +575,13 @@ export default function Home() {
                   }}
                   className="tooltip-instruccion"
                 >
-                  <span style={{ color: accent, fontWeight: 700, fontSize: 17, display: 'block', marginBottom: 8 }}>¿Cómo usar? 🤖</span>
+                  <span style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 17, display: 'block', marginBottom: 8 }}>¿Cómo usar? 🤖</span>
                   <span style={{ color: '#b3b8c5', fontSize: 15, marginBottom: 10 }}>
                     Escribe una o varias instrucciones, <b>una por línea</b>. Puedes indicar el formato al final entre corchetes:
-                    <span style={{ color: accent, fontWeight: 600 }}> [markdown]</span>, <span style={{ color: accent, fontWeight: 600 }}>[pdf]</span>, <span style={{ color: accent, fontWeight: 600 }}>[word]</span>, <span style={{ color: accent, fontWeight: 600 }}>[html]</span>, <span style={{ color: accent, fontWeight: 600 }}>[zip]</span>.
+                    <span style={{ color: 'var(--accent)', fontWeight: 600 }}> [markdown]</span>, <span style={{ color: 'var(--accent)', fontWeight: 600 }}>[pdf]</span>, <span style={{ color: 'var(--accent)', fontWeight: 600 }}>[word]</span>, <span style={{ color: 'var(--accent)', fontWeight: 600 }}>[html]</span>, <span style={{ color: 'var(--accent)', fontWeight: 600 }}>[zip]</span>.
                   </span>
-                  <div style={{ borderLeft: `4px solid ${accent}`, background: '#23262f', padding: '10px 16px', margin: '8px 0 12px 0', borderRadius: 8 }}>
-                    <span style={{ color: accent, fontWeight: 700 }}>Ejemplo:</span><br/>
+                  <div style={{ borderLeft: `4px solid var(--accent)`, background: '#23262f', padding: '10px 16px', margin: '8px 0 12px 0', borderRadius: 8 }}>
+                    <span style={{ color: 'var(--accent)', fontWeight: 700 }}>Ejemplo:</span><br/>
                     <span style={{ color: '#fff' }}>Genera un README general <b>[markdown]</b></span><br/>
                     <span style={{ color: '#fff' }}>Guía de instalación <b>[pdf]</b></span><br/>
                     <span style={{ color: '#fff' }}>Resumen técnico <b>[word]</b></span><br/>
@@ -584,10 +589,10 @@ export default function Home() {
                     <span style={{ color: '#fff' }}>Manual de usuario <b>[zip]</b></span>
                   </div>
                   <div style={{ borderTop: '1px solid #31344255', margin: '8px 0 8px 0' }} />
-                  <span style={{ color: accent, fontWeight: 700, fontSize: 15 }}>💡 Sobre los diagramas:</span><br/>
+                  <span style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 15 }}>💡 Sobre los diagramas:</span><br/>
                   <span style={{ color: '#b3b8c5' }}>Si pides un diagrama (por ejemplo, <b>"Diagrama de arquitectura [markdown]"</b>), la IA generará el código Mermaid y podrás descargar el diagrama como <b>SVG</b> o como <b>bloque markdown</b>.</span>
                   <div style={{ borderTop: '1px solid #31344255', margin: '8px 0 8px 0' }} />
-                  <span style={{ color: accent, fontWeight: 700, fontSize: 15 }}>ℹ️ Nota:</span><br/>
+                  <span style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 15 }}>ℹ️ Nota:</span><br/>
                   <span style={{ color: '#b3b8c5' }}>Si tu instrucción es muy larga y se ve en varias líneas, la IA la tomará como una sola instrucción mientras no presiones <b>Enter</b>.</span>
                 </span>
                 <style>{`
@@ -607,9 +612,9 @@ export default function Home() {
               style={{
                 width: "100%",
                 marginTop: 6,
-                background: bg,
-                color: text,
-                border: `1px solid ${border}`,
+                background: 'var(--bg)',
+                color: 'var(--text)',
+                border: '1px solid var(--border)',
                 borderRadius: 6,
                 padding: 10,
                 fontSize: 16,
@@ -622,35 +627,36 @@ export default function Home() {
               onChange={e => setPrompt(e.target.value)}
               required
               rows={5}
-              placeholder={"Escribe tus instrucciones aquí. Haz clic en ℹ️ para ver ejemplos y formatos."}
+              placeholder={"Escribe tus instrucciones aquí. Haz clic en el ícono de información para ver ejemplos y formatos."}
             />
-            <button type="submit" disabled={loading || !extractPath || !prompt} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "10px 0", fontWeight: 700, fontSize: 17, cursor: loading || !extractPath || !prompt ? "not-allowed" : "pointer", opacity: loading || !extractPath || !prompt ? 0.6 : 1 }}>Enviar a IA</button>
+            <button className="btn" type="submit" disabled={loading || !extractPath || !prompt}>Enviar a IA</button>
           </form>
-          {loading && <p style={{ color: accent, marginTop: 18 }}>Generando documentación, por favor espera...</p>}
+          {loading && <div className="loader" />}
         </div>
         {iaResult && (
-          <div style={{ background: panel, borderRadius: radius, boxShadow: shadow, padding: 28, marginBottom: 32, border: `1px solid ${border}` }}>
-            <h3 style={{ color: accent, fontSize: 20, marginTop: 0, marginBottom: 18 }}>Documentación generada:</h3>
+          <div className="panel">
+            <h3 style={{ color: 'var(--accent)', fontSize: 20, marginTop: 0, marginBottom: 18 }}>Documentación generada:</h3>
             {/* Botones de exportación */}
             <div style={{ marginBottom: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button onClick={handleDownloadMarkdownZip} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 600, fontSize: 15, cursor: "pointer" }}>Descargar ZIP (Markdown)</button>
-              <button onClick={handleDownloadHTML} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 600, fontSize: 15, cursor: "pointer" }}>Descargar HTML</button>
-              <button onClick={handleDownloadWord} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 600, fontSize: 15, cursor: "pointer" }}>Descargar Word</button>
-              <button onClick={handleDownloadPDF} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 600, fontSize: 15, cursor: "pointer" }}>Descargar PDF</button>
+              <button className="btn" onClick={handleDownloadMarkdownZip}>Descargar ZIP (Markdown)</button>
+              <button className="btn" onClick={handleDownloadHTML}>Descargar HTML</button>
+              <button className="btn" onClick={handleDownloadWord}>Descargar Word</button>
+              <button className="btn" onClick={handleDownloadPDF}>Descargar PDF</button>
             </div>
             {/* Renderizar Markdown (sin bloques Mermaid) */}
-            <div style={{ background: bg, borderRadius: 8, padding: 18, marginBottom: 18, border: `1px solid ${border}` }}>
+            <div className="panel ia-markdown" style={{ background: 'var(--bg)', borderRadius: 8, padding: 18, border: `1px solid var(--border)`, marginBottom: 18 }}>
               <ReactMarkdown>{markdownWithoutMermaid}</ReactMarkdown>
             </div>
             {/* Renderizar diagramas Mermaid */}
             {mermaidBlocks.length > 0 && (
               <div style={{ marginTop: 30 }}>
-                <h4 style={{ color: accent, fontSize: 17 }}>Diagramas generados:</h4>
+                <h4 style={{ color: 'var(--accent)', fontSize: 17 }}>Diagramas generados:</h4>
                 {mermaidBlocks.map(block => (
-                  <div key={block.id} style={{ margin: '1rem 0', background: bg, padding: 10, borderRadius: 8, border: `1px solid ${border}` }}>
+                  <div key={block.id} className="panel" style={{ margin: '1rem 0', background: 'var(--bg)', padding: 10, borderRadius: 8, border: `1px solid var(--border)` }}>
                     <div ref={el => { mermaidRefs.current[block.id] = el; }} />
                     <button
-                      style={{ marginTop: 8, background: accent, color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}
+                      className="btn"
+                      style={{ marginTop: 8, background: 'var(--accent)', color: '#fff', borderRadius: 6, fontWeight: 600, fontSize: 14 }}
                       onClick={() => {
                         const svgElement = mermaidRefs.current[block.id]?.querySelector('svg');
                         if (svgElement) {
@@ -669,9 +675,9 @@ export default function Home() {
         )}
         {/* Vista previa del documento seleccionado */}
         {docSeleccionado && (
-          <div style={{ background: panel, borderRadius: radius, boxShadow: shadow, padding: 28, marginBottom: 32, border: `1px solid ${border}` }}>
-            <h3 style={{ color: accent, fontSize: 20, marginTop: 0, marginBottom: 18 }}>Vista previa: {docSeleccionado.nombre}</h3>
-            <div style={{ background: bg, borderRadius: 8, padding: 18, marginBottom: 18, border: `1px solid ${border}` }}>
+          <div className="panel">
+            <h3 style={{ color: 'var(--accent)', fontSize: 20, marginTop: 0, marginBottom: 18 }}>Vista previa: {docSeleccionado.nombre}</h3>
+            <div className="panel" style={{ background: 'var(--bg)', borderRadius: 8, padding: 18, border: `1px solid var(--border)`, marginBottom: 18 }}>
               {docSeleccionado.tipo === 'markdown' && (
                 <ReactMarkdown>{docSeleccionado.contenido as string}</ReactMarkdown>
               )}

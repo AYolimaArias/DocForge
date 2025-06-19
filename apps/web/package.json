@@ -13,6 +13,7 @@
     "@types/mermaid": "^9.2.0",
     "adm-zip": "^0.5.16",
     "file-saver": "^2.0.5",
+    "gpt-tokenizer": "^3.0.1",
     "html-docx-js": "^0.3.1",
     "jszip": "^3.10.1",
     "markdown-pdf": "^11.0.0",

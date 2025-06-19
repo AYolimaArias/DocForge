@@ -339,8 +339,7 @@ export default function Home() {
     setDocSeleccionado(doc);
   }
 
-  // Función para limpiar todo y reiniciar la app
-  function handleNuevoProyecto() {
+  const handleNuevoProyecto = () => {
     setFiles([]);
     setExtractPath("");
     setZip(null);
@@ -356,7 +355,8 @@ export default function Home() {
     setError("");
     setDocumentos([]);
     setDocSeleccionado(null);
-  }
+    setLoading(false);
+  };
 
   return (
     <main style={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
@@ -388,7 +388,7 @@ export default function Home() {
               justifyContent: 'center',
               fontSize: 15
             }}
-            onClick={() => setShowNewProjectModal(true)}
+            onClick={handleNuevoProyecto}
           >
             <FiRefreshCw size={20} />
             Nuevo proyecto

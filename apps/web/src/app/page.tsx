@@ -11,6 +11,7 @@ import NextAuth from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { FiUpload, FiGithub, FiRefreshCw, FiFolder, FiInfo } from 'react-icons/fi';
+import Image from "next/image";
 
 const accent = "#2563eb"; // azul
 const bg = "#181a20";
@@ -48,6 +49,7 @@ export default function Home() {
   const [error, setError] = useState<string>("");
   const [documentos, setDocumentos] = useState<DocumentoGenerado[]>([]);
   const [docSeleccionado, setDocSeleccionado] = useState<DocumentoGenerado | null>(null);
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false);
 
   useEffect(() => {
     // Detectar y renderizar bloques Mermaid en la respuesta de la IA
@@ -357,346 +359,365 @@ export default function Home() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text)", fontFamily: font, padding: 0, margin: 0, display: 'flex' }}>
-      {/* Panel de usuario arriba a la derecha */}
-      <div style={{ position: "absolute", top: 20, right: 30, zIndex: 100, display: 'flex', gap: 12, alignItems: 'center' }}>
-        {session ? (
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            {session.user?.image && (
-              <img
-                src={session.user.image}
-                alt="Avatar"
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  marginRight: 10,
-                  border: '2px solid var(--accent)',
-                  verticalAlign: 'middle',
-                }}
-              />
-            )}
-            <span style={{ marginRight: 10, verticalAlign: 'middle' }}>{session.user?.name || session.user?.email}</span>
-            <button className="btn" onClick={() => signOut()}>Cerrar sesión</button>
-          </div>
-        ) : (
-          <button className="btn" onClick={() => signIn("github")}>Iniciar sesión con GitHub</button>
-        )}
-      </div>
-      {/* Menú lateral: historial de documentos generados */}
-      <aside className="sidebar">
-        <button
-          onClick={handleNuevoProyecto}
-          disabled={files.length === 0 && documentos.length === 0 && !selectedRepo}
-          className="btn"
-          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8 }}
-        >
-          <FiRefreshCw size={20} />
-          Nuevo proyecto
-        </button>
-        <h2>Documentos generados</h2>
-        {documentos.length === 0 ? (
-          <p style={{ color: '#b3b8c5' }}>Aún no has generado documentos.</p>
-        ) : (
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {documentos.map(doc => {
-              let icon = '📝';
-              if (doc.tipo === 'pdf') icon = '📄';
-              else if (doc.tipo === 'word') icon = '🟦';
-              else if (doc.tipo === 'html') icon = '🌐';
-              else if (doc.nombre.endsWith('.zip')) icon = '🗜️';
-              return (
-                <li key={doc.id} style={{ marginBottom: 12 }}>
+    <main style={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
+      {/* Sidebar */}
+      <div style={{
+        width: 300,
+        background: 'var(--panel)',
+        borderRight: '1px solid var(--border)',
+        padding: '32px 24px',
+        position: 'fixed',
+        top: 0,
+        bottom: 0,
+        left: 0,
+        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between'
+      }}>
+        {/* Contenido principal del sidebar */}
+        <div>
+          <button
+            className="btn btn-primary"
+            style={{
+              width: '100%',
+              marginBottom: 32,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              justifyContent: 'center',
+              fontSize: 15
+            }}
+            onClick={() => setShowNewProjectModal(true)}
+          >
+            <FiRefreshCw size={20} />
+            Nuevo proyecto
+          </button>
+
+          <div style={{ marginBottom: 32 }}>
+            <h2 style={{ fontSize: 20, marginBottom: 16, color: 'var(--text)' }}>
+              Documentos generados
+            </h2>
+            {documentos.length === 0 ? (
+              <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
+                Aún no has generado documentos.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {documentos.map((doc, index) => (
                   <button
+                    key={index}
+                    className="doc-button"
                     style={{
-                      background: docSeleccionado?.id === doc.id ? 'var(--accent)' : 'transparent',
-                      color: docSeleccionado?.id === doc.id ? '#fff' : 'var(--text)',
+                      padding: '8px 12px',
+                      background: docSeleccionado === doc ? 'var(--accent-light)' : 'transparent',
                       border: 'none',
                       borderRadius: 6,
-                      padding: '8px 12px',
+                      color: docSeleccionado === doc ? 'var(--accent)' : 'var(--text)',
                       width: '100%',
                       textAlign: 'left',
                       cursor: 'pointer',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      boxShadow: docSeleccionado?.id === doc.id ? '0 2px 8px 0 rgba(37,99,235,0.08)' : 'none',
-                      transition: 'background 0.18s, color 0.18s',
+                      fontSize: 14
                     }}
                     onClick={() => setDocSeleccionado(doc)}
                   >
-                    <span style={{ fontSize: 18 }}>{icon}</span>
                     {doc.nombre}
-                    <span style={{ fontWeight: 400, fontSize: 13, marginLeft: 6, color: '#b3b8c5' }}>({doc.tipo})</span>
                   </button>
-                  <div style={{ marginTop: 2, marginLeft: 4 }}>
-                    <small style={{ color: '#b3b8c5' }}>{doc.fecha.toLocaleString()}</small>
-                    <button
-                      className="btn"
-                      style={{ marginLeft: 8, background: 'none', color: 'var(--accent)', border: 'none', padding: 0, fontSize: 13, boxShadow: 'none' }}
-                      onClick={() => {
-                        // Descargar el documento
-                        if (doc.tipo === 'markdown') {
-                          const blob = new Blob([doc.contenido as string], { type: 'text/markdown' });
-                          saveAs(blob, doc.nombre);
-                        } else if (doc.tipo === 'html') {
-                          const blob = new Blob([doc.contenido as string], { type: 'text/html' });
-                          saveAs(blob, doc.nombre);
-                        } else if (doc.tipo === 'word') {
-                          const blob = new Blob([doc.contenido as string], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-                          saveAs(blob, doc.nombre);
-                        } else if (doc.tipo === 'pdf') {
-                          // PDF generado como HTML, descargar como .html
-                          const blob = new Blob([doc.contenido as string], { type: 'text/html' });
-                          saveAs(blob, doc.nombre.replace('.pdf', '.html'));
-                        }
-                      }}
-                    >Descargar</button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </aside>
-      {/* Panel principal */}
-      <div style={{ flex: 1, padding: 32, maxWidth: 900, margin: '0 auto' }}>
-        <h1 style={{ color: 'var(--accent)', fontWeight: 800, fontSize: 36, letterSpacing: -1, marginBottom: 8 }}>docForge</h1>
-        {/* Panel superior: subir ZIP o analizar repo GitHub */}
-        <div className="panel">
-          <h2 style={{ marginTop: 0, color: 'var(--accent)', fontSize: 22, marginBottom: 18 }}>Sube tu proyecto <span style={{ color: 'var(--text)', fontWeight: 400 }}>(ZIP)</span> o analiza un repositorio de GitHub</h2>
-          <form onSubmit={handleUpload} style={{ marginBottom: 20, display: "flex", gap: 12, alignItems: "center" }}>
-            <input
-              type="file"
-              accept=".zip"
-              id="file-upload"
-              style={{ display: "none" }}
-              onChange={e => setZip(e.target.files?.[0] || null)}
-            />
-            <label htmlFor="file-upload" className="file-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <FiUpload size={20} />
-              {zip ? zip.name : "Seleccionar archivo ZIP"}
-            </label>
-            {zip && (
-              <button className="btn" type="submit">Subir y analizar</button>
-            )}
-          </form>
-          {session && (
-            <div style={{ marginBottom: 16 }}>
-              <button className="file-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={fetchRepos}>
-                <FiGithub size={20} />
-                Analizar repositorio de GitHub
-              </button>
-            </div>
-          )}
-          {showRepoSelector && (
-            <div className="panel" style={{ margin: '16px 0', padding: 18, borderRadius: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-                <label style={{ fontWeight: 500, fontSize: 16 }}>Selecciona un repositorio:</label>
-                <select value={selectedRepo} onChange={e => handleRepoSelect(e.target.value)} style={{ width: 340 }}>
-                  <option value="">-- Selecciona --</option>
-                  {Array.isArray(repos) && repos.map((repo: any) => (
-                    <option key={repo.id} value={repo.full_name}>{repo.full_name}</option>
-                  ))}
-                </select>
-                <button className="file-btn" style={{ minWidth: 'unset', padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => setShowRepoSelector(false)}>
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          )}
-          {error && (
-            <div className="alert-error">{error}</div>
-          )}
-          {loading && (
-            <div className="loader" />
-          )}
-          {files.length > 0 && (
-            <div style={{ marginTop: 18 }}>
-              <h3 style={{ margin: 0, fontSize: 18, color: 'var(--accent)', marginBottom: 18 }}>Archivos extraídos:</h3>
-              <div className="panel" style={{ background: 'var(--bg)', borderRadius: 8, padding: 12, border: `1px solid var(--border)`, maxHeight: 320, overflowY: 'auto', marginBottom: 0 }}>
-                {buildTree(files).length > 0 ? (
-                  buildTree(files).map((node, i) => renderFileTreeWithFolderIcon(node))
-                ) : (
-                  <span style={{ color: '#b3b8c5' }}>No se encontraron archivos.</span>
-                )}
-              </div>
-              <small style={{ color: "#b3b8c5" }}>Selecciona archivos si quieres limitar la consulta. Si no seleccionas nada, la IA analizará todo el proyecto.</small>
-            </div>
-          )}
-        </div>
-        {/* Fin panel superior */}
-        <div className="panel">
-          <h2 style={{ marginTop: 0, color: 'var(--accent)', fontSize: 22, marginBottom: 18 }}>Interactúa con la IA</h2>
-          <form onSubmit={handleAskIA} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <label style={{ fontWeight: 500, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
-              Instrucción
-              <span style={{ position: 'relative', display: 'inline-block' }}>
-                <span
-                  style={{
-                    cursor: 'pointer',
-                    color: 'var(--accent)',
-                    borderRadius: '50%',
-                    width: 22,
-                    height: 22,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: '#23262f',
-                  }}
-                  tabIndex={0}
-                >
-                  <FiInfo size={18} />
-                </span>
-                <span
-                  style={{
-                    visibility: 'hidden',
-                    opacity: 0,
-                    width: 400,
-                    height: 300,
-                    overflowY: 'auto',
-                    background: 'linear-gradient(135deg, #23262f 80%, #2563eb22 100%)',
-                    color: '#fff',
-                    textAlign: 'left',
-                    borderRadius: 12,
-                    padding: '18px 22px',
-                    position: 'absolute',
-                    zIndex: 1000,
-                    left: '50%',
-                    bottom: 38,
-                    transform: 'translateX(-50%)',
-                    boxShadow: '0 2px 16px 0 rgba(0,0,0,0.18)',
-                    fontSize: 15,
-                    transition: 'opacity 0.2s',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                  className="tooltip-instruccion"
-                >
-                  <span style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 17, display: 'block', marginBottom: 8 }}>¿Cómo usar? 🤖</span>
-                  <span style={{ color: '#b3b8c5', fontSize: 15, marginBottom: 10 }}>
-                    Escribe una o varias instrucciones, <b>una por línea</b>. Puedes indicar el formato al final entre corchetes:
-                    <span style={{ color: 'var(--accent)', fontWeight: 600 }}> [markdown]</span>, <span style={{ color: 'var(--accent)', fontWeight: 600 }}>[pdf]</span>, <span style={{ color: 'var(--accent)', fontWeight: 600 }}>[word]</span>, <span style={{ color: 'var(--accent)', fontWeight: 600 }}>[html]</span>, <span style={{ color: 'var(--accent)', fontWeight: 600 }}>[zip]</span>.
-                  </span>
-                  <div style={{ borderLeft: `4px solid var(--accent)`, background: '#23262f', padding: '10px 16px', margin: '8px 0 12px 0', borderRadius: 8 }}>
-                    <span style={{ color: 'var(--accent)', fontWeight: 700 }}>Ejemplo:</span><br/>
-                    <span style={{ color: '#fff' }}>Genera un README general <b>[markdown]</b></span><br/>
-                    <span style={{ color: '#fff' }}>Guía de instalación <b>[pdf]</b></span><br/>
-                    <span style={{ color: '#fff' }}>Resumen técnico <b>[word]</b></span><br/>
-                    <span style={{ color: '#fff' }}>Diagrama de arquitectura <b>[markdown]</b></span><br/>
-                    <span style={{ color: '#fff' }}>Manual de usuario <b>[zip]</b></span>
-                  </div>
-                  <div style={{ borderTop: '1px solid #31344255', margin: '8px 0 8px 0' }} />
-                  <span style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 15 }}>💡 Sobre los diagramas:</span><br/>
-                  <span style={{ color: '#b3b8c5' }}>Si pides un diagrama (por ejemplo, <b>"Diagrama de arquitectura [markdown]"</b>), la IA generará el código Mermaid y podrás descargar el diagrama como <b>SVG</b> o como <b>bloque markdown</b>.</span>
-                  <div style={{ borderTop: '1px solid #31344255', margin: '8px 0 8px 0' }} />
-                  <span style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 15 }}>ℹ️ Nota:</span><br/>
-                  <span style={{ color: '#b3b8c5' }}>Si tu instrucción es muy larga y se ve en varias líneas, la IA la tomará como una sola instrucción mientras no presiones <b>Enter</b>.</span>
-                </span>
-                <style>{`
-                  .tooltip-instruccion {
-                    pointer-events: none;
-                  }
-                  span[tabindex="0"]:hover + .tooltip-instruccion,
-                  span[tabindex="0"]:focus + .tooltip-instruccion {
-                    visibility: visible !important;
-                    opacity: 1 !important;
-                    pointer-events: auto;
-                  }
-                `}</style>
-              </span>
-            </label>
-            <textarea
-              style={{
-                width: "100%",
-                marginTop: 6,
-                background: 'var(--bg)',
-                color: 'var(--text)',
-                border: '1px solid var(--border)',
-                borderRadius: 6,
-                padding: 10,
-                fontSize: 16,
-                marginBottom: 0,
-                height: 120,
-                resize: "none",
-                overflowY: "auto"
-              }}
-              value={prompt}
-              onChange={e => setPrompt(e.target.value)}
-              required
-              rows={5}
-              placeholder={"Escribe tus instrucciones aquí. Haz clic en el ícono de información para ver ejemplos y formatos."}
-            />
-            <button className="btn" type="submit" disabled={loading || !extractPath || !prompt}>Enviar a IA</button>
-          </form>
-          {loading && <div className="loader" />}
-        </div>
-        {iaResult && (
-          <div className="panel">
-            <h3 style={{ color: 'var(--accent)', fontSize: 20, marginTop: 0, marginBottom: 18 }}>Documentación generada:</h3>
-            {/* Botones de exportación */}
-            <div style={{ marginBottom: 16, display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button className="btn" onClick={handleDownloadMarkdownZip}>Descargar ZIP (Markdown)</button>
-              <button className="btn" onClick={handleDownloadHTML}>Descargar HTML</button>
-              <button className="btn" onClick={handleDownloadWord}>Descargar Word</button>
-              <button className="btn" onClick={handleDownloadPDF}>Descargar PDF</button>
-            </div>
-            {/* Renderizar Markdown (sin bloques Mermaid) */}
-            <div className="panel ia-markdown" style={{ background: 'var(--bg)', borderRadius: 8, padding: 18, border: `1px solid var(--border)`, marginBottom: 18 }}>
-              <ReactMarkdown>{markdownWithoutMermaid}</ReactMarkdown>
-            </div>
-            {/* Renderizar diagramas Mermaid */}
-            {mermaidBlocks.length > 0 && (
-              <div style={{ marginTop: 30 }}>
-                <h4 style={{ color: 'var(--accent)', fontSize: 17 }}>Diagramas generados:</h4>
-                {mermaidBlocks.map(block => (
-                  <div key={block.id} className="panel" style={{ margin: '1rem 0', background: 'var(--bg)', padding: 10, borderRadius: 8, border: `1px solid var(--border)` }}>
-                    <div ref={el => { mermaidRefs.current[block.id] = el; }} />
-                    <button
-                      className="btn"
-                      style={{ marginTop: 8, background: 'var(--accent)', color: '#fff', borderRadius: 6, fontWeight: 600, fontSize: 14 }}
-                      onClick={() => {
-                        const svgElement = mermaidRefs.current[block.id]?.querySelector('svg');
-                        if (svgElement) {
-                          const svgData = new XMLSerializer().serializeToString(svgElement);
-                          const blob = new Blob([svgData], { type: 'image/svg+xml' });
-                          saveAs(blob, `${block.id}.svg`);
-                        }
-                      }}
-                    >Descargar SVG</button>
-                    <pre style={{ fontSize: 12, color: '#888', marginTop: 8 }}>{block.code}</pre>
-                  </div>
                 ))}
               </div>
             )}
           </div>
-        )}
-        {/* Vista previa del documento seleccionado */}
-        {docSeleccionado && (
-          <div className="panel">
-            <h3 style={{ color: 'var(--accent)', fontSize: 20, marginTop: 0, marginBottom: 18 }}>Vista previa: {docSeleccionado.nombre}</h3>
-            <div className="panel" style={{ background: 'var(--bg)', borderRadius: 8, padding: 18, border: `1px solid var(--border)`, marginBottom: 18 }}>
-              {docSeleccionado.tipo === 'markdown' && (
-                <ReactMarkdown>{docSeleccionado.contenido as string}</ReactMarkdown>
-              )}
-              {docSeleccionado.tipo === 'html' && (
-                <div dangerouslySetInnerHTML={{ __html: docSeleccionado.contenido as string }} />
-              )}
-              {docSeleccionado.tipo === 'word' && (
-                <div dangerouslySetInnerHTML={{ __html: docSeleccionado.contenido as string }} />
-              )}
-              {docSeleccionado.tipo === 'pdf' && (
-                <iframe
-                  srcDoc={docSeleccionado.contenido as string}
-                  style={{ width: '100%', height: 600, border: 'none' }}
-                  title="Vista previa PDF"
+        </div>
+
+        {/* Panel de inicio de sesión en la parte inferior */}
+        <div style={{ 
+          marginTop: 'auto',
+          borderTop: '1px solid var(--border)',
+          paddingTop: '16px'
+        }}>
+          {session ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {session.user?.image && (
+                <Image
+                  src={session.user.image}
+                  width={32}
+                  height={32}
+                  alt={session.user.name || 'Avatar de usuario'}
+                  style={{ borderRadius: '50%' }}
+                  unoptimized
                 />
               )}
+              <div style={{ flex: 1 }}>
+                <p style={{ color: 'var(--text)', fontSize: 14, margin: 0 }}>{session.user?.name}</p>
+              </div>
+              <button
+                className="btn btn-primary"
+                style={{ padding: '6px 12px', fontSize: 13 }}
+                onClick={() => signOut()}
+              >
+                Salir
+              </button>
             </div>
+          ) : (
+            <button
+              className="btn btn-primary"
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                justifyContent: 'center',
+                fontSize: 15
+              }}
+              onClick={() => signIn('github')}
+            >
+              <FiGithub size={20} />
+              Iniciar sesión con GitHub
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Panel principal */}
+      <div style={{ 
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '32px 48px',
+        marginLeft: '300px',
+        background: 'linear-gradient(135deg, #000000 0%, #000000 60%, rgba(37, 99, 235, 0.15) 100%)'
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '900px'
+        }}>
+          <h1 style={{ 
+            color: 'var(--accent)', 
+            fontWeight: 800, 
+            fontSize: 36, 
+            letterSpacing: -1, 
+            marginBottom: 8
+          }}>docForge</h1>
+
+          {/* Panel superior: subir ZIP o analizar repo GitHub */}
+          <div className="panel">
+            <h2 style={{ marginTop: 0, color: 'var(--accent)', fontSize: 22, marginBottom: 18 }}>
+              Sube tu proyecto <span style={{ color: 'var(--text)', fontWeight: 400 }}>(ZIP)</span> o analiza un repositorio de GitHub
+            </h2>
+            <form onSubmit={handleUpload} style={{ marginBottom: 20, display: "flex", gap: 12, alignItems: "center" }}>
+              <input
+                type="file"
+                accept=".zip"
+                id="file-upload"
+                style={{ display: "none" }}
+                onChange={e => setZip(e.target.files?.[0] || null)}
+              />
+              <label htmlFor="file-upload" className="file-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <FiUpload size={20} />
+                {zip ? zip.name : "Seleccionar archivo ZIP"}
+              </label>
+              {zip && (
+                <button className="btn" type="submit">Subir y analizar</button>
+              )}
+            </form>
+            {session && (
+              <div style={{ marginBottom: 16 }}>
+                <button className="file-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={fetchRepos}>
+                  <FiGithub size={20} />
+                  Analizar repositorio de GitHub
+                </button>
+              </div>
+            )}
+            {showRepoSelector && (
+              <div className="panel" style={{ margin: '16px 0', padding: 18, borderRadius: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                  <label style={{ fontWeight: 500, fontSize: 16 }}>Selecciona un repositorio:</label>
+                  <select value={selectedRepo} onChange={e => handleRepoSelect(e.target.value)} style={{ width: 340 }}>
+                    <option value="">-- Selecciona --</option>
+                    {Array.isArray(repos) && repos.map((repo: any) => (
+                      <option key={repo.id} value={repo.full_name}>{repo.full_name}</option>
+                    ))}
+                  </select>
+                  <button className="file-btn" style={{ minWidth: 'unset', padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => setShowRepoSelector(false)}>
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+            {error && (
+              <div className="alert-error">{error}</div>
+            )}
+            {loading && (
+              <div className="loader" />
+            )}
+            {files.length > 0 && (
+              <div style={{ marginTop: 18 }}>
+                <h3 style={{ margin: 0, fontSize: 18, color: 'var(--accent)', marginBottom: 18 }}>Archivos extraídos:</h3>
+                <div className="panel" style={{ background: 'var(--bg)', borderRadius: 8, padding: 12, border: `1px solid var(--border)`, maxHeight: 320, overflowY: 'auto', marginBottom: 0 }}>
+                  {buildTree(files).length > 0 ? (
+                    buildTree(files).map((node, i) => renderFileTreeWithFolderIcon(node))
+                  ) : (
+                    <span style={{ color: '#b3b8c5' }}>No se encontraron archivos.</span>
+                  )}
+                </div>
+                <small style={{ color: "#b3b8c5" }}>Selecciona archivos si quieres limitar la consulta. Si no seleccionas nada, la IA analizará todo el proyecto.</small>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Panel de interacción con IA */}
+          <div className="panel">
+            <h2 style={{ marginTop: 0, color: 'var(--accent)', fontSize: 22, marginBottom: 18 }}>Interactúa con la IA</h2>
+            <form onSubmit={handleAskIA} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <label style={{ fontWeight: 500, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
+                Instrucción
+                <span style={{ position: 'relative', display: 'inline-block' }}>
+                  <span
+                    style={{
+                      cursor: 'pointer',
+                      color: 'var(--accent)',
+                      borderRadius: '50%',
+                      width: 22,
+                      height: 22,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: '#23262f',
+                    }}
+                    tabIndex={0}
+                  >
+                    <FiInfo size={18} />
+                  </span>
+                  <span
+                    style={{
+                      visibility: 'hidden',
+                      opacity: 0,
+                      width: 400,
+                      height: 300,
+                      overflowY: 'auto',
+                      background: 'linear-gradient(135deg, #23262f 80%, #2563eb22 100%)',
+                      color: '#fff',
+                      textAlign: 'left',
+                      borderRadius: 12,
+                      padding: '18px 22px',
+                      position: 'absolute',
+                      zIndex: 1000,
+                      left: '50%',
+                      bottom: 38,
+                      transform: 'translateX(-50%)',
+                      boxShadow: '0 2px 16px 0 rgba(0,0,0,0.18)',
+                      fontSize: 15,
+                      transition: 'opacity 0.2s',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                    className="tooltip-instruccion"
+                  >
+                    <span style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 17, display: 'block', marginBottom: 8 }}>¿Cómo usar? 🤖</span>
+                    <span style={{ color: '#b3b8c5', fontSize: 15, marginBottom: 10 }}>
+                      Escribe una o varias instrucciones, <b>una por línea</b>. Puedes indicar el formato al final entre corchetes:
+                      <span style={{ color: 'var(--accent)', fontWeight: 600 }}> [markdown]</span>, <span style={{ color: 'var(--accent)', fontWeight: 600 }}>[pdf]</span>, <span style={{ color: 'var(--accent)', fontWeight: 600 }}>[word]</span>, <span style={{ color: 'var(--accent)', fontWeight: 600 }}>[html]</span>, <span style={{ color: 'var(--accent)', fontWeight: 600 }}>[zip]</span>.
+                    </span>
+                    <div style={{ borderLeft: `4px solid var(--accent)`, background: '#23262f', padding: '10px 16px', margin: '8px 0 12px 0', borderRadius: 8 }}>
+                      <span style={{ color: 'var(--accent)', fontWeight: 700 }}>Ejemplo:</span><br/>
+                      <span style={{ color: '#fff' }}>Genera un README general <b>[markdown]</b></span><br/>
+                      <span style={{ color: '#fff' }}>Guía de instalación <b>[pdf]</b></span><br/>
+                      <span style={{ color: '#fff' }}>Resumen técnico <b>[word]</b></span><br/>
+                      <span style={{ color: '#fff' }}>Diagrama de arquitectura <b>[markdown]</b></span><br/>
+                      <span style={{ color: '#fff' }}>Manual de usuario <b>[zip]</b></span>
+                    </div>
+                    <div style={{ borderTop: '1px solid #31344255', margin: '8px 0 8px 0' }} />
+                    <span style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 15 }}>💡 Sobre los diagramas:</span><br/>
+                    <span style={{ color: '#b3b8c5' }}>Si pides un diagrama (por ejemplo, <b>"Diagrama de arquitectura [markdown]"</b>), la IA generará el código Mermaid y podrás descargar el diagrama como <b>SVG</b> o como <b>bloque markdown</b>.</span>
+                    <div style={{ borderTop: '1px solid #31344255', margin: '8px 0 8px 0' }} />
+                    <span style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 15 }}>ℹ️ Nota:</span><br/>
+                    <span style={{ color: '#b3b8c5' }}>Si tu instrucción es muy larga y se ve en varias líneas, la IA la tomará como una sola instrucción mientras no presiones <b>Enter</b>.</span>
+                  </span>
+                  <style>{`
+                    .tooltip-instruccion {
+                      pointer-events: none;
+                    }
+                    span[tabindex="0"]:hover + .tooltip-instruccion,
+                    span[tabindex="0"]:focus + .tooltip-instruccion {
+                      visibility: visible !important;
+                      opacity: 1 !important;
+                      pointer-events: auto;
+                    }
+                  `}</style>
+                </span>
+              </label>
+              <textarea
+                style={{
+                  width: "100%",
+                  marginTop: 6,
+                  background: 'var(--bg)',
+                  color: 'var(--text)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 6,
+                  padding: 10,
+                  fontSize: 16,
+                  marginBottom: 0,
+                  height: 120,
+                  resize: "none",
+                  overflowY: "auto"
+                }}
+                value={prompt}
+                onChange={e => setPrompt(e.target.value)}
+                required
+                rows={5}
+                placeholder={"Escribe tus instrucciones aquí. Haz clic en el ícono de información para ver ejemplos y formatos."}
+              />
+              <button className="btn btn-primary" type="submit" disabled={loading || !extractPath || !prompt}>Enviar a IA</button>
+            </form>
+            {loading && <div className="loader" />}
+          </div>
+
+          {/* Vista previa del documento */}
+          {docSeleccionado && (
+            <div className="panel">
+              <h3 style={{ color: 'var(--accent)', fontSize: 20, marginTop: 0, marginBottom: 18, textAlign: 'center' }}>
+                Vista previa: {docSeleccionado.nombre}
+              </h3>
+              <div 
+                className="panel" 
+                style={{ 
+                  background: 'var(--bg)', 
+                  borderRadius: 8, 
+                  padding: '32px 48px',
+                  border: '1px solid var(--border)', 
+                  marginBottom: 18,
+                  maxWidth: '850px',
+                  margin: '0 auto',
+                  maxHeight: 'calc(100vh - 300px)',
+                  overflowY: 'auto',
+                  position: 'relative'
+                }}
+              >
+                <div style={{ position: 'relative' }}>
+                  {docSeleccionado.tipo === 'markdown' && (
+                    <div className="ia-markdown">
+                      <ReactMarkdown>{docSeleccionado.contenido as string}</ReactMarkdown>
+                    </div>
+                  )}
+                  {docSeleccionado.tipo === 'html' && (
+                    <div dangerouslySetInnerHTML={{ __html: docSeleccionado.contenido as string }} />
+                  )}
+                  {docSeleccionado.tipo === 'word' && (
+                    <div dangerouslySetInnerHTML={{ __html: docSeleccionado.contenido as string }} />
+                  )}
+                  {docSeleccionado.tipo === 'pdf' && (
+                    <iframe
+                      srcDoc={docSeleccionado.contenido as string}
+                      style={{ width: '100%', height: '100%', border: 'none', minHeight: '600px' }}
+                      title="Vista previa PDF"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );

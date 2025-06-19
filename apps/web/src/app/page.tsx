@@ -12,6 +12,7 @@ import GitHubProvider from "next-auth/providers/github";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { FiUpload, FiGithub, FiRefreshCw, FiFolder, FiInfo } from 'react-icons/fi';
 import Image from "next/image";
+import { Document, Packer, Paragraph, TextRun } from 'docx';
 
 const accent = "#2563eb"; // azul
 const bg = "#181a20";
@@ -676,9 +677,86 @@ export default function Home() {
           {/* Vista previa del documento */}
           {docSeleccionado && (
             <div className="panel">
-              <h3 style={{ color: 'var(--accent)', fontSize: 20, marginTop: 0, marginBottom: 18, textAlign: 'center' }}>
-                Vista previa: {docSeleccionado.nombre}
-              </h3>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                marginBottom: 18 
+              }}>
+                <h3 style={{ 
+                  color: 'var(--accent)', 
+                  fontSize: 20, 
+                  margin: 0,
+                  textAlign: 'center' 
+                }}>
+                  Vista previa: {docSeleccionado.nombre}
+                </h3>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {docSeleccionado.tipo === 'markdown' && (
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        const blob = new Blob([docSeleccionado.contenido as string], { type: 'text/markdown' });
+                        saveAs(blob, docSeleccionado.nombre);
+                      }}
+                    >
+                      Descargar MD
+                    </button>
+                  )}
+                  {docSeleccionado.tipo === 'html' && (
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        const blob = new Blob([docSeleccionado.contenido as string], { type: 'text/html' });
+                        saveAs(blob, docSeleccionado.nombre);
+                      }}
+                    >
+                      Descargar HTML
+                    </button>
+                  )}
+                  {docSeleccionado.tipo === 'word' && (
+                    <button
+                      className="btn"
+                      onClick={async () => {
+                        // Crear un nuevo documento
+                        const doc = new Document({
+                          sections: [{
+                            properties: {},
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: docSeleccionado.contenido as string,
+                                  }),
+                                ],
+                              }),
+                            ],
+                          }],
+                        });
+
+                        // Generar el blob
+                        const blob = await Packer.toBlob(doc);
+                        
+                        // Descargar el archivo
+                        saveAs(blob, docSeleccionado.nombre.endsWith('.docx') ? docSeleccionado.nombre : `${docSeleccionado.nombre}.docx`);
+                      }}
+                    >
+                      Descargar Word
+                    </button>
+                  )}
+                  {docSeleccionado.tipo === 'pdf' && (
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        const blob = new Blob([docSeleccionado.contenido as string], { type: 'text/html' });
+                        saveAs(blob, docSeleccionado.nombre.replace('.pdf', '.html'));
+                      }}
+                    >
+                      Descargar PDF
+                    </button>
+                  )}
+                </div>
+              </div>
               <div 
                 className="panel" 
                 style={{ 

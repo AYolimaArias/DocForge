@@ -12,6 +12,7 @@
     "@babel/parser": "^7.27.5",
     "@types/mermaid": "^9.2.0",
     "adm-zip": "^0.5.16",
+    "docx": "^9.5.1",
     "file-saver": "^2.0.5",
     "gpt-tokenizer": "^3.0.1",
     "html-docx-js": "^0.3.1",

@@ -377,6 +377,14 @@ export default function Home() {
       }}>
         {/* Contenido principal del sidebar */}
         <div>
+          <h1 style={{ 
+            color: 'var(--accent)', 
+            fontWeight: 800, 
+            fontSize: 36, 
+            letterSpacing: -1, 
+            marginBottom: 32
+          }}>docForge</h1>
+
           <button
             className="btn btn-primary"
             style={{
@@ -492,14 +500,6 @@ export default function Home() {
           width: '100%',
           maxWidth: '900px'
         }}>
-          <h1 style={{ 
-            color: 'var(--accent)', 
-            fontWeight: 800, 
-            fontSize: 36, 
-            letterSpacing: -1, 
-            marginBottom: 8
-          }}>docForge</h1>
-
           {/* Panel superior: subir ZIP o analizar repo GitHub */}
           <div className="panel">
             <h2 style={{ marginTop: 0, color: 'var(--accent)', fontSize: 22, marginBottom: 18 }}>

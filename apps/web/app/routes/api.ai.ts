@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { ActionFunctionArgs } from "@remix-run/node";
 import fs from 'fs';
 import path from 'path';
 import OpenAI from 'openai';
@@ -80,17 +80,20 @@ async function processChunkWithAI(chunk: string, prompt: string, openai: OpenAI,
   return completion.choices[0]?.message?.content || '';
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
+export async function action({ request }: ActionFunctionArgs) {
+  if (request.method !== 'POST') {
+    return new Response('Método no permitido', { status: 405 });
   }
 
   try {
-    const { prompt, extractPath, selectedFiles = [], model = 'gpt-3.5-turbo' } = req.body;
+    const { prompt, extractPath, selectedFiles = [], model = 'gpt-3.5-turbo' } = await request.json();
     const apiKey = process.env.OPENAI_API_KEY;
     
     if (!apiKey) {
-      return res.status(500).json({ error: 'No se encontró la API Key de OpenAI' });
+      return new Response(JSON.stringify({ error: 'No se encontró la API Key de OpenAI' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     const openai = new OpenAI({
@@ -137,9 +140,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       finalResult = await processChunkWithAI('', summaryPrompt, openai, model);
     }
 
-    return res.status(200).json({ result: finalResult });
+    return new Response(JSON.stringify({ result: finalResult }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (e: any) {
     console.error('Error:', e);
-    return res.status(500).json({ error: e.message || 'Error al consultar la IA' });
+    return new Response(JSON.stringify({ error: e.message || 'Error al consultar la IA' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 } 

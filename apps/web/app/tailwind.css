@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .panel {
+    @apply bg-gradient-to-br from-panel to-panel/80 rounded-lg shadow border border-border p-7 mb-8;
+  }
+  
+  .btn {
+    @apply bg-accent text-white border-none rounded-md py-2.5 px-5 font-bold text-base cursor-pointer transition-all shadow-btn disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-[#1746b0] hover:enabled:shadow-btn-hover;
+  }
+
+  .file-btn {
+    @apply bg-panel text-text border border-border rounded-md py-2 px-4.5 font-medium text-sm cursor-pointer transition-all mr-2 inline-block min-w-[170px] text-center;
+  }
+  .file-btn:hover, .file-btn:focus {
+    @apply bg-accent text-white border-accent shadow-[0_0_0_3px_rgba(37,99,235,0.18)];
+  }
+
+  input, select, textarea {
+    @apply bg-bg text-text border border-border rounded-md p-2.5 text-base outline-none transition-all focus:border-accent focus:ring-2 focus:ring-accent/20;
+  }
+
+  .loader {
+    @apply border-4 border-panel border-t-accent rounded-full w-9 h-9 animate-spin mx-auto my-6;
+  }
+
+  .alert-error {
+    @apply text-red-400 bg-red-900/50 border-l-4 border-red-400 p-2.5 rounded-lg my-3 font-semibold;
+  }
+  
+  .alert-success {
+    @apply text-green-400 bg-green-900/50 border-l-4 border-green-400 p-2.5 rounded-lg my-3 font-semibold;
+  }
+
+  /* Estilos para el markdown renderizado */
+  .ia-markdown {
+    @apply text-base leading-relaxed text-text;
+  }
+  .ia-markdown h1, 
+  .ia-markdown h2, 
+  .ia-markdown h3 {
+    @apply font-bold text-accent mt-6 mb-3 leading-tight;
+  }
+  .ia-markdown h1 {
+    @apply text-3xl border-b-2 border-border pb-2;
+  }
+  .ia-markdown h2 {
+    @apply text-2xl border-b border-border pb-2;
+  }
+  .ia-markdown h3 {
+    @apply text-xl;
+  }
+  .ia-markdown p {
+    @apply my-4;
+  }
+  .ia-markdown ul, 
+  .ia-markdown ol {
+    @apply my-4 pl-8;
+  }
+  .ia-markdown li {
+    @apply my-2;
+  }
+  .ia-markdown code {
+    @apply font-mono bg-panel text-cyan-300 py-1 px-1.5 rounded text-sm;
+  }
+  .ia-markdown pre {
+    @apply bg-panel p-4 rounded-lg overflow-x-auto my-4;
+  }
+  .ia-markdown pre code {
+    @apply bg-transparent p-0 text-sm text-slate-200;
+  }
+  .ia-markdown blockquote {
+    @apply border-l-4 border-accent my-4 px-4 py-2 bg-panel rounded;
+  }
+  .ia-markdown table {
+    @apply border-collapse w-full my-4;
+  }
+  .ia-markdown th, 
+  .ia-markdown td {
+    @apply border border-border p-3 text-left;
+  }
+  .ia-markdown th {
+    @apply bg-panel;
+  }
+  .ia-markdown a {
+    @apply text-accent hover:underline;
+  }
+  .ia-markdown hr {
+    @apply border-t border-border my-6;
+  }
+} 

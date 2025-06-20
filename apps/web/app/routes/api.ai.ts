@@ -2,94 +2,153 @@ import { json, type ActionFunctionArgs } from "@remix-run/node";
 import path from "path";
 import { readdir, stat, readFile } from "fs/promises";
 import { ChatOpenAI } from "@langchain/openai";
-import { loadQARefineChain } from "langchain/chains";
-import { Document } from "@langchain/core/documents";
 
-// La constante 'openai' ya no es necesaria aquí.
+// Configuración de límites de tokens
+const MAX_TOKENS_PER_REQUEST = 4096; // Límite de contexto para gpt-3.5-turbo
+const MAX_TOKENS_FOR_COMPLETION = 1024; // Tokens reservados para la respuesta
+const MAX_TOKENS_FOR_CONTEXT = MAX_TOKENS_PER_REQUEST - MAX_TOKENS_FOR_COMPLETION;
 
-// Función para obtener todos los archivos de un directorio (versión final y robusta)
-async function getAllFiles(dirPath: string): Promise<string[]> {
-  let allFiles: string[] = [];
+// Ampliar soporte de lenguajes
+const SUPPORTED_EXTS = [
+  '.js', '.ts', '.jsx', '.tsx', '.py', '.java', '.php', '.cs', '.rb', '.go', '.c', '.cpp', '.h', '.swift', '.kt'
+];
+
+// Función para dividir el texto en chunks basados en caracteres
+// Esta es una aproximación simple - en promedio, 1 token ≈ 4 caracteres en inglés
+function splitIntoChunks(text: string, maxTokens: number): string[] {
+  const avgCharsPerToken = 4;
+  const maxCharsPerChunk = maxTokens * avgCharsPerToken;
+  const chunks: string[] = [];
+  
+  let currentChunk = '';
+  const lines = text.split('\n');
+  
+  for (const line of lines) {
+    if ((currentChunk.length + line.length + 1) > maxCharsPerChunk) {
+      if (currentChunk) {
+        chunks.push(currentChunk);
+        currentChunk = '';
+      }
+      // Si una sola línea es más grande que el límite, la dividimos
+      if (line.length > maxCharsPerChunk) {
+        const parts = Math.ceil(line.length / maxCharsPerChunk);
+        for (let i = 0; i < parts; i++) {
+          chunks.push(line.slice(i * maxCharsPerChunk, (i + 1) * maxCharsPerChunk));
+        }
+      } else {
+        currentChunk = line;
+      }
+    } else {
+      currentChunk += (currentChunk ? '\n' : '') + line;
+    }
+  }
+  
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
+  
+  return chunks;
+}
+
+// Función para obtener todos los archivos de un directorio
+async function getAllFiles(dirPath: string, exts: string[] = SUPPORTED_EXTS): Promise<string[]> {
+  let results: string[] = [];
   try {
     const items = await readdir(dirPath);
-    const ignoreExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.mp4', '.mov', '.mp3', '.lock'];
-    const ignoreFiles = ['.gitignore', 'package-lock.json', 'yarn.lock'];
-
-
+    
     for (const item of items) {
-      if (ignoreFiles.includes(item)) continue;
-      
       const itemPath = path.join(dirPath, item);
-      const ext = path.extname(itemPath);
-      if (ignoreExtensions.includes(ext)) continue;
-
       try {
         const stats = await stat(itemPath);
         if (stats.isDirectory()) {
           if (!['node_modules', '.git', '.vscode', 'dist', 'build'].includes(item)) {
-            const nestedFiles = await getAllFiles(itemPath);
-            allFiles = allFiles.concat(nestedFiles);
+            const nestedFiles = await getAllFiles(itemPath, exts);
+            results = results.concat(nestedFiles);
           }
-        } else {
-          allFiles.push(itemPath);
+        } else if (exts.includes(path.extname(itemPath))) {
+          results.push(itemPath);
         }
       } catch (err) {
         continue;
       }
     }
   } catch (err) {
-    console.error(`[DocForge] NATIVE: Failed to read directory: ${dirPath}`, err);
+    console.error(`[DocForge] Failed to read directory: ${dirPath}`, err);
     return [];
   }
-  return allFiles;
+  return results;
+}
+
+// Función para procesar un chunk de código con la IA
+async function processChunkWithAI(chunk: string, prompt: string, llm: ChatOpenAI): Promise<string> {
+  const result = await llm.invoke([
+    { role: 'system', content: 'Eres un experto en documentación de software y análisis de código. Analiza el código proporcionado y genera documentación clara y concisa.' },
+    { role: 'user', content: `${prompt}\n\nCódigo a analizar:\n${chunk}` }
+  ]);
+
+  return result.content as string;
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   try {
-    const { prompt, extractPath, selectedFiles } = await request.json();
+    const { prompt, extractPath, selectedFiles = [], model = 'gpt-3.5-turbo-0125' } = await request.json();
 
     if (!prompt) {
       return json({ error: "Prompt is required." }, { status: 400 });
     }
 
-    let filesToProcess = selectedFiles || [];
-    if (extractPath && filesToProcess.length === 0) {
-      const allProjectFiles = await getAllFiles(extractPath);
-      filesToProcess = allProjectFiles.map(filePath => path.relative(extractPath, filePath));
+    // Obtener archivos a procesar
+    let filesToRead: string[] = [];
+    if (selectedFiles.length > 0) {
+      filesToRead = selectedFiles.map((f: string) => path.join(extractPath, f));
+    } else {
+      filesToRead = await getAllFiles(extractPath);
     }
 
-    if (!filesToProcess || filesToProcess.length === 0) {
-        return json({ error: "No files found to analyze." }, { status: 400 });
+    if (filesToRead.length === 0) {
+      return json({ error: "No files found to analyze." }, { status: 400 });
     }
 
-    const docs: Document[] = [];
-    for (const file of filesToProcess) {
-        const filePath = path.join(extractPath, file);
-        try {
-            await stat(filePath);
-            const content = await readFile(filePath, "utf-8");
-            // Usar solo una parte del archivo para no sobrecargar cada paso
-            const truncatedContent = content.substring(0, 4000);
-            docs.push(new Document({ pageContent: truncatedContent, metadata: { source: file } }));
-        } catch (err) {
-            continue;
-        }
+    // Leer y procesar archivos
+    let allCode = '';
+    for (const file of filesToRead) {
+      try {
+        const relativePath = file.replace(extractPath + '/', '');
+        const content = await readFile(file, 'utf-8');
+        allCode += `\n\n// Archivo: ${relativePath}\n${content}`;
+      } catch (error) {
+        console.error(`Error leyendo archivo ${file}:`, error);
+      }
     }
 
-    if (docs.length === 0) {
-        return json({ error: "Could not read any of the selected files." }, { status: 400 });
-    }
+    // Dividir en chunks si es necesario
+    const chunks = splitIntoChunks(allCode, MAX_TOKENS_FOR_CONTEXT);
+    let finalResult = '';
 
-    // Usar la estrategia de "Refine" de LangChain
-    const llm = new ChatOpenAI({ modelName: "gpt-3.5-turbo-0125", temperature: 0.2 });
-    const chain = loadQARefineChain(llm);
-    
-    const result = await chain.invoke({
-        input_documents: docs, // La cadena de Refine maneja los documentos uno por uno
-        question: prompt,
+    // Inicializar el modelo de IA
+    const llm = new ChatOpenAI({ 
+      modelName: model, 
+      temperature: 0.2,
+      maxTokens: MAX_TOKENS_FOR_COMPLETION
     });
 
-    return json({ message: result.output_text });
+    // Procesar cada chunk
+    for (let i = 0; i < chunks.length; i++) {
+      const chunkPrompt = chunks.length > 1 
+        ? `${prompt} (Parte ${i + 1} de ${chunks.length} del código)`
+        : prompt;
+      
+      const chunkResult = await processChunkWithAI(chunks[i], chunkPrompt, llm);
+      finalResult += (i > 0 ? '\n\n' : '') + chunkResult;
+    }
+
+    // Si hubo múltiples chunks, hacer un resumen final
+    if (chunks.length > 1) {
+      const summaryPrompt = `Por favor, resume y consolida la siguiente documentación generada en partes:\n\n${finalResult}`;
+      finalResult = await processChunkWithAI('', summaryPrompt, llm);
+    }
+
+    return json({ message: finalResult });
 
   } catch (error: any) {
     console.error("AI Error:", error);

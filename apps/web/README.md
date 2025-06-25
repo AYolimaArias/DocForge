@@ -10,7 +10,7 @@ Proyecto monolito construido con [Remix](https://remix.run/), [Vite](https://vit
 npm install
 ```
 
-2. Inicia el servidor de desarrollo:
+2. Inicia el servidor de desarrollo (¡desde la raíz!):
 
 ```bash
 npm run dev
@@ -19,6 +19,8 @@ npm run dev
 3. Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver la app.
 
 ## 📦 Scripts principales
+
+> **Puedes ejecutar estos comandos desde la raíz del proyecto** gracias al `package.json` de la raíz, que reenvía los scripts a `apps/web`.
 
 - `npm run dev` — Inicia el servidor Remix en modo desarrollo
 - `npm run build` — Compila la app para producción
@@ -59,6 +61,7 @@ SESSION_SECRET=xxx
 - Este proyecto fue migrado desde Next.js a Remix. Si encuentras referencias a Next.js, puedes ignorarlas o eliminarlas.
 - Toda la lógica y componentes están en `apps/web/app/`.
 - Si tienes dudas sobre la estructura de componentes, revisa el archivo `components/README.md`.
+- El `package.json` de la raíz solo contiene scripts para tu comodidad, el principal está en `apps/web`.
 
 ---
 

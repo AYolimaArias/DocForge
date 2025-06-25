@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useFetcher } from '@remix-run/react';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
@@ -36,6 +36,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const [showRepoSelector, setShowRepoSelector] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState<string>("");
   const [repos, setRepos] = useState<any[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isUploading = uploadFetcher.state !== 'idle';
   const isAnalyzingRepo = analyzeRepoFetcher.state !== 'idle';
@@ -102,9 +103,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     );
   };
 
+  // Nueva función para abrir el explorador
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <Card title="Sube tu proyecto" subtitle="(ZIP) o analiza un repositorio de GitHub">
-      <uploadFetcher.Form method="post" action="/api/upload" encType="multipart/form-data" className="mb-5 flex gap-3 items-center">
+      <uploadFetcher.Form method="post" action="/api/upload" encType="multipart/form-data" className="mb-5 flex gap-3 items-center" onSubmit={e => e.preventDefault()}>
         <input
           type="file"
           accept=".zip"
@@ -112,12 +118,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           name="file"
           className="hidden"
           onChange={handleFileUpload}
+          ref={fileInputRef}
         />
-        <label htmlFor="file-upload" className="flex items-center gap-2 cursor-pointer">
-          <Button icon="upload" variant="secondary">
-            {zip ? zip.name : "Seleccionar archivo ZIP"}
-          </Button>
-        </label>
+        <Button icon="upload" variant="secondary" type="button" onClick={handleButtonClick}>
+          {zip ? zip.name : "Seleccionar archivo ZIP"}
+        </Button>
       </uploadFetcher.Form>
 
       {user && (

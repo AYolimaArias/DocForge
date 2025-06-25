@@ -113,7 +113,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           className="hidden"
           onChange={handleFileUpload}
         />
-        <label htmlFor="file-upload" className="file-btn flex items-center gap-2 cursor-pointer">
+        <label htmlFor="file-upload" className="flex items-center gap-2 cursor-pointer">
           <Button icon="upload" variant="secondary">
             {zip ? zip.name : "Seleccionar archivo ZIP"}
           </Button>

@@ -17,7 +17,7 @@ const iconMap = {
 
 const variantStyles = {
   primary: 'bg-accent text-white shadow-btn hover:bg-[#1746b0] hover:shadow-btn-hover',
-  secondary: 'bg-background-secondary text-text font-bold border-none rounded-md transition-colors hover:bg-accent hover:text-white',
+  secondary: 'bg-bg text-accent border border-accent font-bold rounded-md transition-colors hover:bg-accent hover:text-white',
   outline: 'border border-border text-text hover:bg-background-secondary',
   ghost: 'text-text hover:bg-white/10',
 };

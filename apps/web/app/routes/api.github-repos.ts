@@ -2,8 +2,6 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { authenticator } from "../services/auth.server";
 import { Octokit } from "@octokit/rest";
 
-// TODO: Implementar la lógica real usando la sesión de usuario con remix-auth
-// y la API de GitHub (Octokit).
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request);

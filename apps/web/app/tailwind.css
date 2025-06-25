@@ -103,7 +103,7 @@
   }
 
   .btn {
-    @apply font-bold rounded-md transition-all;
+    @apply bg-accent text-white border-none rounded py-2.5 px-5 font-bold text-base cursor-pointer transition-all shadow-btn disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-[#1746b0] hover:enabled:shadow-btn-hover;
   }
 
   .btn-primary {
@@ -114,17 +114,28 @@
     @apply bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-md flex items-center gap-2;
   }
 
-  .loader {
-    @apply flex justify-center items-center;
+  .alert-success {
+    @apply text-success bg-[#1a2a1a] border-l-4 border-success p-2.5 rounded-lg my-3 font-semibold;
   }
 
-  .loader::after {
-    content: '';
-    @apply w-6 h-6 animate-spin rounded-full border-2 border-accent border-t-transparent;
+  .loader {
+    @apply border-4 border-panel border-t-accent rounded-full w-9 h-9 animate-spin mx-auto my-6;
   }
 
   .panel {
-    @apply bg-bg rounded-lg p-4.5;
+    @apply bg-gradient-to-br from-panel to-panel/80 rounded-lg shadow border border-border p-7 mb-8 transition-all;
+  }
+
+  .sidebar {
+    @apply bg-gradient-to-br from-panel to-accent-light border-r border-border min-h-screen p-7 w-[260px] flex flex-col;
+  }
+
+  .file-btn:hover, .file-btn:focus {
+    @apply bg-accent text-white border-accent shadow-[0_0_0_3px_rgba(37,99,235,0.18)];
+  }
+
+  input, select, textarea {
+    @apply bg-bg text-text border border-border rounded p-2.5 text-base outline-none transition-all focus:border-accent focus:ring-2 focus:ring-accent/20;
   }
 
   /* Tooltip personalizado */
@@ -208,27 +219,6 @@
     @apply bg-white/5;
   }
 
-  .sidebar {
-    @apply bg-gradient-to-br from-panel to-accent-light border-r border-border min-h-screen p-7 w-[260px] flex flex-col;
-  }
-  .panel {
-    @apply bg-gradient-to-br from-panel to-panel/80 rounded-lg shadow border border-border p-7 mb-8 transition-all;
-  }
-  .btn {
-    @apply bg-accent text-white border-none rounded py-2.5 px-5 font-bold text-base cursor-pointer transition-all shadow-btn disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-[#1746b0] hover:enabled:shadow-btn-hover;
-  }
-  .file-btn:hover, .file-btn:focus {
-    @apply bg-accent text-white border-accent shadow-[0_0_0_3px_rgba(37,99,235,0.18)];
-  }
-  input, select, textarea {
-    @apply bg-bg text-text border border-border rounded p-2.5 text-base outline-none transition-all focus:border-accent focus:ring-2 focus:ring-accent/20;
-  }
-  .loader {
-    @apply border-4 border-panel border-t-accent rounded-full w-9 h-9 animate-spin mx-auto my-6;
-  }
-  .alert-success {
-    @apply text-success bg-[#1a2a1a] border-l-4 border-success p-2.5 rounded-lg my-3 font-semibold;
-  }
   /* Markdown */
   .ia-markdown {
     @apply text-base leading-relaxed text-text;
@@ -284,13 +274,22 @@
 }
 
 @layer utilities {
-  /* Scrollbar personalizada */
+  /* Scrollbar para navegadores basados en Webkit (Chrome, Edge, Safari) */
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
-    background: #23262f;
+    background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #2563eb;
+    background: #21262d;
     border-radius: 8px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #1f6feb;
+  }
+
+  /* Firefox */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #21262d transparent;
   }
 } 

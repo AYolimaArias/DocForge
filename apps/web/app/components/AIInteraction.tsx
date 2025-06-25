@@ -5,6 +5,7 @@ import { Button } from './ui/Button';
 import { Alert } from './ui/Alert';
 import { Loader } from './ui/Loader';
 import { FiInfo } from 'react-icons/fi';
+import { TooltipInfo } from "./TooltipInfo";
 
 interface AIInteractionProps {
   extractPath: string;
@@ -77,24 +78,14 @@ export const AIInteraction: React.FC<AIInteractionProps> = ({
         <label className="font-medium text-base flex items-center gap-2 relative group">
           Instrucción
           <span className="relative inline-block">
-            <span
-              className="cursor-pointer text-accent rounded-full w-5 h-5 flex items-center justify-center bg-panel"
-              tabIndex={0}
-            >
-              <FiInfo size={18} />
-            </span>
-            <div className="tooltip-instruccion invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 w-[400px] h-auto overflow-y-auto bg-gradient-to-br from-panel to-panel/80 text-white text-left rounded-lg p-5 absolute z-50 left-1/2 bottom-9 -translate-x-1/2 shadow-lg text-sm transition-opacity pointer-events-none group-hover:pointer-events-auto">
-              <span className="text-accent font-bold text-base block mb-2">¿Cómo usar? 🤖</span>
-              <span className="text-text-secondary text-sm mb-2.5 block">
-                Escribe una o varias instrucciones, <b>una por línea</b>. Puedes indicar el formato al final entre corchetes:
-                <span className="text-accent font-semibold"> [markdown]</span>, <span className="text-accent font-semibold">[pdf]</span>, <span className="text-accent font-semibold">[word]</span>, <span className="text-accent font-semibold">[html]</span>, <span className="text-accent font-semibold">[zip]</span>.
+            <div className="relative inline-block">
+              <span
+                className="cursor-pointer text-accent rounded-full w-5 h-5 flex items-center justify-center bg-panel"
+                tabIndex={0}
+              >
+                <FiInfo size={18} />
               </span>
-              <div className="border-l-4 border-accent bg-bg p-4 my-3 rounded-lg">
-                <span className="text-accent font-bold">Ejemplo:</span><br/>
-                <span className="text-white">Genera un README general <b>[markdown]</b></span><br/>
-                <span className="text-white">Guía de instalación <b>[pdf]</b></span><br/>
-                <span className="text-white">Resumen técnico <b>[word]</b></span><br/>
-              </div>
+              <TooltipInfo />
             </div>
           </span>
         </label>

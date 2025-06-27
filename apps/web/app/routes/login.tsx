@@ -4,9 +4,17 @@ import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { authenticator, registerUser } from "../services/auth.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const form = await request.formData();
-  const intent = form.get("intent");
+  // Clona el request para poder leer el body sin bloquear el stream original
+  const reqClone = request.clone();
+  let intent = null;
+  try {
+    const form = await reqClone.formData();
+    intent = form.get("intent");
+  } catch (e) {
+    // Puede fallar si no es un formData válido, ignorar
+  }
   if (intent === "register") {
+    const form = await request.formData();
     const email = form.get("email")?.toString();
     const password = form.get("password")?.toString();
     const name = form.get("name")?.toString();
@@ -18,7 +26,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return json({ error: "El email ya está registrado" }, { status: 400 });
     }
   }
-  // Login normal
+  // Login normal: NO leer el body antes
   return authenticator.authenticate("user-pass", request, {
     successRedirect: "/",
     failureRedirect: "/login?error=1",
@@ -28,7 +36,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function Login() {
   const [step, setStep] = useState<"email" | "password">("email");
   const [email, setEmail] = useState("");
-  const [showRegister, setShowRegister] = useState(false);
+  const [password, setPassword] = useState("");
   const actionData = useActionData<typeof action>();
   const transition = useNavigation();
 
@@ -81,6 +89,8 @@ export default function Login() {
                 name="password"
                 placeholder="Contraseña"
                 className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-gray-100"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
                 required
                 autoComplete="off"
               />

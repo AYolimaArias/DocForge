@@ -48,55 +48,58 @@ export default function Login() {
               Accede a tu asistente de documentación inteligente con IA
             </span>
           </div>
-          <Form method="post" className="space-y-4">
-            {step === "email" && (
-              <>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Ingresa tu email"
-                  className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-gray-100"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  className="w-full bg-[#1CB5E0] hover:bg-[#1597bb] text-white py-2 rounded font-semibold mt-2 transition-colors"
-                  onClick={() => setStep("password")}
-                  disabled={!email}
-                >
-                  Continuar
-                </button>
-              </>
-            )}
-            {step === "password" && (
-              <>
-                <input type="hidden" name="email" value={email} />
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Contraseña"
-                  className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-gray-100"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="w-full bg-[#1CB5E0] hover:bg-[#1597bb] text-white py-2 rounded font-semibold mt-2 transition-colors"
-                  disabled={transition.state === "submitting"}
-                >
-                  {transition.state === "submitting" ? "Ingresando..." : "Ingresar"}
-                </button>
-                <button
-                  type="button"
-                  className="w-full text-blue-500 text-sm mt-2"
-                  onClick={() => setStep("email")}
-                >
-                  Volver
-                </button>
-              </>
-            )}
-          </Form>
+          {/* Paso 1: Email */}
+          {step === "email" && (
+            <div className="space-y-4">
+              <input
+                type="email"
+                name="email"
+                placeholder="Ingresa tu email"
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-gray-100"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                autoComplete="off"
+                onKeyDown={e => { if (e.key === 'Enter' && email) { e.preventDefault(); setStep('password'); } }}
+              />
+              <button
+                type="button"
+                className="w-full bg-gradient-to-r from-[#00FFB4] to-[#1CB5E0] text-white py-2 rounded font-semibold mt-2 transition-colors"
+                disabled={!email}
+                onClick={() => setStep("password")}
+              >
+                Continuar
+              </button>
+            </div>
+          )}
+          {/* Paso 2: Contraseña */}
+          {step === "password" && (
+            <Form method="post" className="space-y-4" autoComplete="off">
+              <input type="hidden" name="email" value={email} />
+              <input
+                type="password"
+                name="password"
+                placeholder="Contraseña"
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-black bg-gray-100"
+                required
+                autoComplete="off"
+              />
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-[#00FFB4] to-[#1CB5E0] text-white py-2 rounded font-semibold mt-2 transition-colors"
+                disabled={transition.state === "submitting"}
+              >
+                {transition.state === "submitting" ? "Ingresando..." : "Ingresar"}
+              </button>
+              <button
+                type="button"
+                className="w-full text-blue-500 text-sm mt-2"
+                onClick={() => setStep("email")}
+              >
+                Volver
+              </button>
+            </Form>
+          )}
           <div className="flex items-center my-4">
             <div className="flex-1 h-px bg-gray-200" />
             <span className="mx-2 text-gray-400 text-xs">o</span>

@@ -125,14 +125,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </Button>
       </uploadFetcher.Form>
 
-      {user && (
-        <div className="mb-4">
-          <Button icon="github" variant="secondary" onClick={fetchRepos}>
-            Analizar repositorio de GitHub
-          </Button>
-        </div>
-      )}
-
       {showRepoSelector && (
         <div className="panel bg-bg rounded-lg p-4.5 my-4">
           <div className="flex items-center gap-5">

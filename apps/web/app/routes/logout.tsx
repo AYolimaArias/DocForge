@@ -8,4 +8,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       "Set-Cookie": await sessionStorage.destroySession(session),
     },
   });
-}; 
+};
+
+export const action = loader; 

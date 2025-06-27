@@ -1,10 +1,4 @@
 import { Authenticator } from "remix-auth";
-import {
-  GitHubStrategy,
-  type GitHubExtraParams,
-  type GitHubProfile,
-} from "remix-auth-github";
-import type { OAuth2StrategyVerifyParams } from "remix-auth-oauth2";
 import { sessionStorage } from "./session.server";
 import { FormStrategy } from "remix-auth-form";
 import { GoogleStrategy } from "remix-auth-google";
@@ -22,47 +16,12 @@ export interface User {
 
 export const authenticator = new Authenticator<User>(sessionStorage);
 
-const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
-if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
-  throw new Error("GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET must be set");
+if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+  throw new Error("GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set");
 }
-
-async function verifyCallback({
-  profile,
-  tokens,
-}: OAuth2StrategyVerifyParams<
-  GitHubProfile,
-  GitHubExtraParams
->): Promise<User> {
-  const email = profile.emails?.[0]?.value;
-  if (!email) {
-    throw new Error("Email is not available from the GitHub profile.");
-  }
-
-  const user: User = {
-    id: profile.id,
-    name: profile.displayName,
-    email: email,
-    avatar_url: profile.photos?.[0]?.value ?? "",
-    accessToken: tokens.access_token,
-  };
-
-  return user;
-}
-
-const gitHubStrategy = new GitHubStrategy(
-  {
-    clientId: GITHUB_CLIENT_ID,
-    clientSecret: GITHUB_CLIENT_SECRET,
-    redirectURI: "http://localhost:3000/auth/github/callback",
-    scopes: ["read:user", "user:email", "repo"],
-  },
-  verifyCallback
-);
-
-authenticator.use(gitHubStrategy);
 
 // Estrategia de email/contraseña
 authenticator.use(
@@ -74,7 +33,15 @@ authenticator.use(
     if (!user || !user.password) throw new Error("Usuario o contraseña incorrectos");
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new Error("Usuario o contraseña incorrectos");
-    return user.id;
+    
+    // Devolver un objeto User consistente
+    return {
+      id: user.id,
+      name: user.name || "",
+      email: user.email,
+      avatar_url: "",
+      accessToken: "",
+    };
   }),
   "user-pass"
 );
@@ -83,31 +50,43 @@ authenticator.use(
 authenticator.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientID: GOOGLE_CLIENT_ID,
+      clientSecret: GOOGLE_CLIENT_SECRET,
       callbackURL: "http://localhost:3000/auth/google/callback",
       scope: ["profile", "email", "https://www.googleapis.com/auth/documents"],
       accessType: "offline",
       prompt: "consent",
     },
     async ({ profile, accessToken }) => {
-      let user = await prisma.user.findUnique({ where: { googleId: profile.id } });
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            email: profile.emails[0].value,
-            name: profile.displayName,
-            googleId: profile.id,
-            googleToken: accessToken,
-          },
-        });
-      } else {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { googleToken: accessToken },
-        });
+      try {
+        let user = await prisma.user.findUnique({ where: { googleId: profile.id } });
+        if (!user) {
+          user = await prisma.user.create({
+            data: {
+              email: profile.emails[0].value,
+              name: profile.displayName,
+              googleId: profile.id,
+              googleToken: accessToken,
+            },
+          });
+        } else {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { googleToken: accessToken },
+          });
+        }
+        // Devolver un objeto User consistente
+        return {
+          id: user.id,
+          name: user.name || profile.displayName,
+          email: user.email,
+          avatar_url: profile.photos?.[0]?.value ?? "",
+          accessToken: accessToken,
+        };
+      } catch (error) {
+        console.error("Error en GoogleStrategy:", error);
+        throw error;
       }
-      return user.id;
     }
   ),
   "google"

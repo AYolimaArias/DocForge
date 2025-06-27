@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Form, useActionData, useTransition } from "@remix-run/react";
+import { Form, useActionData, useNavigation } from "@remix-run/react";
 import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { authenticator, registerUser } from "../services/auth.server";
 
@@ -30,7 +30,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [showRegister, setShowRegister] = useState(false);
   const actionData = useActionData<typeof action>();
-  const transition = useTransition();
+  const transition = useNavigation();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">

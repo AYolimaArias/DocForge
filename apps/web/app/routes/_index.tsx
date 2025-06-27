@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLoaderData } from "@remix-run/react";
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { authenticator } from "../services/auth.server";
 import {
   Layout,
@@ -13,11 +13,13 @@ import {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request);
+  if (!user) return redirect("/login");
   return json({ user });
 };
 
 export default function Index() {
   const { user } = useLoaderData<typeof loader>();
+  if (!user) return null;
   
   // Estado local
   const [files, setFiles] = useState<string[]>([]);

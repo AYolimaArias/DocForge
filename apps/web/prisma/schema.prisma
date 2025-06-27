@@ -15,12 +15,22 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String?  // null si es usuario Google
-  name      String?
-  googleId  String?  @unique
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String?  // null si es usuario Google
+  name        String?
+  googleId    String?  @unique
   googleToken String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sessions    Session[] // <--- ESTA LÍNEA AGREGA LA RELACIÓN INVERSA
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }

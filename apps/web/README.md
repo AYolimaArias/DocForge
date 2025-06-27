@@ -66,3 +66,62 @@ SESSION_SECRET=xxx
 ---
 
 ¡Feliz documentación y desarrollo con Remix! 🚀
+
+## Configuración de la base de datos para colaboradores
+
+Este proyecto usa **PostgreSQL** y **Prisma** como ORM. Para que puedas crear, migrar o resetear la base de datos localmente, sigue estos pasos:
+
+### 1. Permisos necesarios
+
+El usuario de PostgreSQL que uses en tu `.env` debe tener permiso para crear bases de datos (`CREATEDB`). Esto es necesario porque Prisma usa una "shadow database" para aplicar migraciones de forma segura.
+
+**Para dar el permiso:**
+
+```
+sudo -u postgres psql
+ALTER USER tu_usuario CREATEDB;
+\q
+```
+
+Reemplaza `tu_usuario` por el usuario que usas en tu `DATABASE_URL`.
+
+---
+
+### 2. Comandos útiles con Prisma
+
+- **Crear y migrar la base de datos (aplicar migraciones):**
+  ```sh
+  npx prisma migrate dev
+  ```
+
+- **Crear una nueva migración (cuando cambias el modelo):**
+  ```sh
+  npx prisma migrate dev --name nombre_migracion
+  ```
+
+- **Borrar y recrear la base de datos (desarrollo):**
+  ```sh
+  npx prisma migrate reset
+  ```
+
+- **Actualizar el cliente Prisma después de cambiar el modelo:**
+  ```sh
+  npx prisma generate
+  ```
+
+---
+
+### 3. Variables de entorno
+
+Asegúrate de tener un archivo `.env` con la variable `DATABASE_URL` apuntando a tu base de datos PostgreSQL local.
+
+```
+DATABASE_URL="postgresql://usuario:clave@localhost:5432/nombre_db"
+```
+
+---
+
+### 4. Más información
+
+- [Documentación oficial de Prisma](https://www.prisma.io/docs)
+- [Documentación de PostgreSQL](https://www.postgresql.org/docs/)

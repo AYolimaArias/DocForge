@@ -37,8 +37,14 @@ export default function Index() {
   };
 
   const handleDocumentoGenerado = (doc: DocumentoGenerado) => {
-    setDocumentos(prev => [doc, ...prev]);
-    setDocSeleccionado(doc);
+    setDocumentos(prev => {
+      const nuevosDocs = [doc, ...prev];
+      // Si es el primer documento o no hay ninguno seleccionado, seleccionarlo automáticamente
+      if (nuevosDocs.length === 1 || !docSeleccionado) {
+        setDocSeleccionado(doc);
+      }
+      return nuevosDocs;
+    });
   };
 
   return (

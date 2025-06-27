@@ -81,8 +81,31 @@ async function getAllFiles(dirPath: string, exts: string[] = SUPPORTED_EXTS): Pr
 
 // Función para procesar un chunk de código con la IA
 async function processChunkWithAI(chunk: string, prompt: string, llm: ChatOpenAI): Promise<string> {
+  const systemPrompt = `
+Eres un experto en documentación de software y análisis de código.
+IMPORTANTE:
+- Si el prompt te pide generar múltiples archivos, DEBES usar el separador exacto ---ARCHIVO: nombre.ext--- antes de cada archivo.
+- Cada bloque debe contener SOLO el contenido correspondiente a ese archivo, NO repitas el contenido de otros archivos en cada bloque.
+- NO incluyas el código fuente del proyecto, SOLO la documentación solicitada.
+- Si no puedes separar la documentación, responde solo con un archivo llamado error.md y el texto 'No se pudo separar'.
+Ejemplo de formato correcto:
+---ARCHIVO: readme.md---
+# Título del README
+Contenido del README...
+
+---ARCHIVO: diagrama.mmd---
+\`\`\`mermaid
+diagram TD;
+A-->B;
+\`\`\`
+
+---ARCHIVO: guia.docx---
+# Guía de Usuario
+Contenido de la guía...
+`;
+
   const result = await llm.invoke([
-    { role: 'system', content: 'Eres un experto en documentación de software y análisis de código. Analiza el código proporcionado y genera documentación clara y concisa.' },
+    { role: 'system', content: systemPrompt },
     { role: 'user', content: `${prompt}\n\nCódigo a analizar:\n${chunk}` }
   ]);
 
@@ -91,7 +114,7 @@ async function processChunkWithAI(chunk: string, prompt: string, llm: ChatOpenAI
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   try {
-    const { prompt, extractPath, selectedFiles = [], model = 'gpt-3.5-turbo-0125' } = await request.json();
+    const { prompt, extractPath, selectedFiles = [], model = 'gpt-4o' } = await request.json();
 
     if (!prompt) {
       return json({ error: "Prompt is required." }, { status: 400 });
@@ -144,7 +167,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     // Si hubo múltiples chunks, hacer un resumen final
     if (chunks.length > 1) {
-      const summaryPrompt = `Por favor, resume y consolida la siguiente documentación generada en partes:\n\n${finalResult}`;
+      const summaryPrompt = `Por favor, resume y consolida la siguiente documentación generada en partes. Mantén el formato de separadores ---ARCHIVO: nombre.ext--- si los hay:\n\n${finalResult}`;
       finalResult = await processChunkWithAI('', summaryPrompt, llm);
     }
 

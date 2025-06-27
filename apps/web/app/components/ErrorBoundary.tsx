@@ -4,6 +4,7 @@ import { Button } from './ui/Button';
 interface ErrorBoundaryState {
   hasError: boolean;
   error?: Error;
+  isClient: boolean;
 }
 
 interface ErrorBoundaryProps {
@@ -13,10 +14,14 @@ interface ErrorBoundaryProps {
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, isClient: false };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  componentDidMount() {
+    this.setState({ isClient: true });
+  }
+
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return { hasError: true, error };
   }
 
@@ -50,7 +55,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 Intentar de nuevo
               </Button>
             </div>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {this.state.isClient && typeof window !== 'undefined' && window.location.hostname === 'localhost' && this.state.error && (
               <details className="mt-6 text-left">
                 <summary className="cursor-pointer text-accent font-medium">
                   Detalles del error (solo desarrollo)

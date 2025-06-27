@@ -43,9 +43,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </p>
           ) : (
             <div className="flex flex-col gap-2">
-              {documentos.map((doc, index) => (
+              {documentos.map((doc) => (
                 <button
-                  key={index}
+                  key={doc.id}
                   className={`w-full text-left text-sm rounded-md py-2 px-3 transition-colors ${
                     docSeleccionado === doc 
                       ? 'bg-accent-light text-accent' 

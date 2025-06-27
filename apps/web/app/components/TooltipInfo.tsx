@@ -1,30 +1,16 @@
-import React from "react";
-import { Tooltip } from "./ui/Tooltip";
+import React from 'react';
 
-export const TooltipInfo: React.FC = () => (
-  <Tooltip>
-    <span className="text-accent font-bold text-base block mb-2">¿Cómo usar? 🤖</span>
-    <span className="text-text-secondary text-sm mb-2.5 block">
-      Escribe una o varias instrucciones, <b>una por línea</b>. Puedes indicar el formato al final entre corchetes:
-      <span className="text-accent font-semibold"> [markdown]</span>, <span className="text-accent font-semibold">[pdf]</span>, <span className="text-accent font-semibold">[word]</span>, <span className="text-accent font-semibold">[html]</span>, <span className="text-accent font-semibold">[zip]</span>.
-    </span>
-    <div className="border-l-4 border-accent bg-bg p-4 my-3 rounded-lg">
-      <span className="text-accent font-bold">Ejemplo:</span><br/>
-      <span className="text-white">Genera un README general <b>[markdown]</b></span><br/>
-      <span className="text-white">Guía de instalación <b>[pdf]</b></span><br/>
-      <span className="text-white">Resumen técnico <b>[word]</b></span><br/>
-      <span className="text-white">Diagrama de arquitectura <b>[markdown]</b></span><br/>
-      <span className="text-white">Manual de usuario <b>[zip]</b></span>
+export const TooltipInfo: React.FC = () => {
+  return (
+    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+      <div className="text-xs">
+        <p><strong>Ejemplos de formato:</strong></p>
+        <p>• generar readme [markdown]</p>
+        <p>• crear diagrama de arquitectura [mermaid]</p>
+        <p>• documentar API [word]</p>
+        <p>• guía de instalación [html]</p>
+      </div>
+      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
     </div>
-    <div className="border-t border-border my-2" />
-    <span className="text-accent font-bold text-sm block mb-1">💡 Sobre los diagramas:</span><br/>
-    <span className="text-text-secondary text-xs block mb-2">
-      Si pides un diagrama (por ejemplo, <b>"Diagrama de arquitectura [markdown]"</b>), la IA generará el código Mermaid y podrás descargar el diagrama como <b>SVG</b> o como <b>bloque markdown</b>.
-    </span>
-    <div className="border-t border-border my-2" />
-    <span className="text-accent font-bold text-sm block mb-1">ℹ️ Nota:</span><br/>
-    <span className="text-text-secondary text-xs block">
-      Si tu instrucción es muy larga y se ve en varias líneas, la IA la tomará como una sola instrucción mientras no presiones <b>Enter</b>.
-    </span>
-  </Tooltip>
-); 
+  );
+}; 

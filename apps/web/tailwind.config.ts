@@ -6,12 +6,12 @@ export default {
     extend: {
       colors: {
         accent: '#2563eb',
-        'accent-light': 'rgba(37, 99, 235, 0.1)',
-        bg: '#181a20',
-        panel: '#23262f',
-        text: '#f3f4f6',
-        'text-secondary': '#b3b8c5',
-        border: '#313442',
+        'accent-light': 'rgba(37, 99, 235, 0.08)',
+        bg: '#f7f8fa',
+        panel: '#ffffff',
+        text: '#22223b',
+        'text-secondary': '#6c6f80',
+        border: '#e0e3eb',
         error: '#ff4d4f',
         success: '#1ecb7a',
       },

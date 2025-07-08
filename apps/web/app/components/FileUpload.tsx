@@ -16,6 +16,10 @@ interface FileUploadProps {
   onExtractPathChange: (path: string) => void;
   onSelectedFilesChange: (files: string[]) => void;
   onError: (error: string) => void;
+  minimal?: boolean; // NUEVA PROP
+  onBannerClick?: () => void; // NUEVA PROP
+  buttonComponent?: React.ElementType;
+  buttonProps?: Record<string, any>;
 }
 
 export const FileUpload: React.FC<FileUploadProps> = ({
@@ -27,6 +31,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   onExtractPathChange,
   onSelectedFilesChange,
   onError,
+  minimal = false,
+  onBannerClick,
+  buttonComponent: ButtonComponent = Button,
+  buttonProps = {},
 }) => {
   const uploadFetcher = useFetcher<{ files: string[], extractPath: string, error?: string }>();
   const reposFetcher = useFetcher<any[]>();
@@ -107,6 +115,43 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const handleButtonClick = () => {
     fileInputRef.current?.click();
   };
+
+  if (minimal) {
+    return (
+      <div className="w-full flex flex-col items-center">
+        <uploadFetcher.Form method="post" action="/api/upload" encType="multipart/form-data" className="w-full flex flex-row gap-2 mb-2" onSubmit={e => e.preventDefault()}>
+          <input
+            type="file"
+            accept=".zip"
+            id="file-upload"
+            name="file"
+            className="hidden"
+            onChange={handleFileUpload}
+            ref={fileInputRef}
+          />
+          <ButtonComponent
+            icon="upload"
+            type="button"
+            onClick={handleButtonClick}
+            {...buttonProps}
+          >
+            {zip ? zip.name : "Subir repositorio"}
+          </ButtonComponent>
+        </uploadFetcher.Form>
+        {zip && (
+          <div className={`w-full mb-2 bg-blue-50 border border-blue-200 rounded px-4 py-2 text-blue-800 font-medium flex items-center justify-between ${onBannerClick ? 'cursor-pointer hover:bg-blue-100 transition' : ''}`}
+            onClick={onBannerClick}
+          >
+            <span>{zip.name}</span>
+          </div>
+        )}
+        {uploadFetcher.data?.error && (
+          <Alert type="error" message={uploadFetcher.data.error} />
+        )}
+        {(isUploading) && <Loader />}
+      </div>
+    );
+  }
 
   return (
     <Card title="Sube tu proyecto" subtitle="(ZIP) o analiza un repositorio de GitHub">

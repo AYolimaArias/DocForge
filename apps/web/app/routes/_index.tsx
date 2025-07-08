@@ -4,7 +4,6 @@ import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { authenticator } from "../services/auth.server";
 import {
   Layout,
-  Sidebar,
   FileUpload,
   AIInteraction,
   DocumentPreview,
@@ -50,46 +49,27 @@ export default function Index() {
   };
 
   return (
-    <Layout>
-      <div className="flex min-h-screen bg-background text-foreground">
-        {/* Sidebar */}
-        <Sidebar
+    <Layout
+      user={user}
+      documentos={documentos}
+      docSeleccionado={docSeleccionado}
+      onNuevoProyecto={handleNuevoProyecto}
+      onDocumentoSelect={setDocSeleccionado}
+    >
+      <div className="w-full max-w-4xl mx-auto mt-24">
+        <AIInteraction
+          extractPath={extractPath}
+          selectedFiles={selectedFiles}
+          onDocumentoGenerado={handleDocumentoGenerado}
+          onError={setError}
+          userName={user.name || "Usuario"}
+          files={files}
+          onFilesChange={setFiles}
+          onExtractPathChange={setExtractPath}
+          onSelectedFilesChange={setSelectedFiles}
           user={user}
-          documentos={documentos}
-          docSeleccionado={docSeleccionado}
-          onNuevoProyecto={handleNuevoProyecto}
-          onDocumentoSelect={setDocSeleccionado}
         />
-
-        {/* Contenido Principal */}
-        <main className="flex-1 ml-72 p-8 overflow-y-auto">
-          <div className="max-w-4xl mx-auto space-y-8">
-            
-            {/* Panel 1: Carga de Proyecto */}
-            <FileUpload
-              user={user}
-              files={files}
-              extractPath={extractPath}
-              selectedFiles={selectedFiles}
-              onFilesChange={setFiles}
-              onExtractPathChange={setExtractPath}
-              onSelectedFilesChange={setSelectedFiles}
-              onError={setError}
-            />
-
-            {/* Panel 2: Interacción con la IA */}
-            <AIInteraction
-              extractPath={extractPath}
-              selectedFiles={selectedFiles}
-              onDocumentoGenerado={handleDocumentoGenerado}
-              onError={setError}
-            />
-            
-            {/* Panel 3: Vista Previa */}
-            <DocumentPreview documento={docSeleccionado} />
-
-          </div>
-        </main>
+        <DocumentPreview documento={docSeleccionado} />
       </div>
     </Layout>
   );

@@ -1,10 +1,10 @@
 import React from 'react';
-import { FiRefreshCw, FiGithub, FiUpload, FiInfo } from 'react-icons/fi';
+import { FiRefreshCw, FiGithub, FiUpload, FiInfo, FiSettings } from 'react-icons/fi';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'input';
   size?: 'sm' | 'md' | 'lg';
-  icon?: 'refresh' | 'github' | 'upload' | 'info' | React.ReactNode;
+  icon?: 'refresh' | 'github' | 'upload' | 'info' | 'settings' | React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -13,6 +13,7 @@ const iconMap = {
   github: FiGithub,
   upload: FiUpload,
   info: FiInfo,
+  settings: FiSettings,
 };
 
 const variantStyles = {
@@ -20,10 +21,11 @@ const variantStyles = {
   secondary: 'bg-bg text-accent border border-accent font-bold rounded-md transition-colors hover:bg-accent hover:text-white',
   outline: 'border border-border text-text hover:bg-background-secondary',
   ghost: 'text-text hover:bg-white/10',
+  input: 'bg-gray-300 text-gray-800 rounded-full shadow-none border-0 hover:bg-gray-400',
 };
 
 const sizeStyles = {
-  sm: 'py-1.5 px-3 text-xs',
+  sm: 'h-8 px-3 text-xs',
   md: 'py-2.5 px-4 text-sm',
   lg: 'py-3 px-6 text-base',
 };
@@ -41,14 +43,14 @@ export const Button: React.FC<ButtonProps> = ({
   return (
     <button
       className={`
-        flex items-center gap-2 justify-center font-bold rounded-md transition-all
+        flex items-center gap-2 justify-center font-bold transition-all
         ${variantStyles[variant]}
         ${sizeStyles[size]}
         ${className}
       `}
       {...props}
     >
-      {IconComponent && <IconComponent size={size === 'sm' ? 16 : 20} />}
+      {IconComponent && <IconComponent size={18} className="text-gray-800" />}
       {typeof icon === 'object' && icon}
       {children}
     </button>

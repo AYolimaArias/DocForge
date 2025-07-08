@@ -1,17 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useFetcher } from '@remix-run/react';
-import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Alert } from './ui/Alert';
 import { Loader } from './ui/Loader';
-import { FiInfo } from 'react-icons/fi';
-import { TooltipInfo } from "./TooltipInfo";
+import { FileTree } from './FileTree';
+import { FileUpload } from './FileUpload';
+import { Modal } from './ui/Modal';
 
 interface AIInteractionProps {
   extractPath: string;
   selectedFiles: string[];
   onDocumentoGenerado: (doc: any) => void;
   onError: (error: string) => void;
+  userName?: string;
+  files: string[];
+  onFilesChange: (files: string[]) => void;
+  onExtractPathChange: (path: string) => void;
+  onSelectedFilesChange: (files: string[]) => void;
+  user: any;
 }
 
 interface InstruccionPendiente {
@@ -36,7 +42,7 @@ const FORMATO_EXTENSION: Record<string, { ext: string, tipo: string }> = {
 
 function limpiarNombre(nombre: string) {
   return nombre
-    .replace(/\s*\[[^\]]+\]$/, '') // quita [formato]
+    .replace(/\s*\[[^\]]+\]$/, '')
     .replace(/[^a-zA-Z0-9-_ ]/g, '_')
     .replace(/\s+/g, '_')
     .substring(0, 40) || 'documento';
@@ -56,20 +62,36 @@ export const AIInteraction: React.FC<AIInteractionProps> = ({
   selectedFiles,
   onDocumentoGenerado,
   onError,
+  userName = "Usuario",
+  files,
+  onFilesChange,
+  onExtractPathChange,
+  onSelectedFilesChange,
+  user,
 }) => {
   const aiFetcher = useFetcher<{ message: string, error?: string, id?: string }>();
+  const reposFetcher = useFetcher<any[]>();
+  const analyzeRepoFetcher = useFetcher<{ files: string[], extractPath: string, error?: string }>();
   const [prompt, setPrompt] = useState("");
   const instruccionesPendientes = useRef<InstruccionPendiente[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [cola, setCola] = useState<InstruccionPendiente[]>([]);
   const [procesando, setProcesando] = useState(0);
+  const [showRepoSelector, setShowRepoSelector] = useState(false);
+  const [selectedRepo, setSelectedRepo] = useState<string>("");
+  const [repos, setRepos] = useState<any[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [zip, setZip] = useState<File | null>(null);
+  const [showFileTreeModal, setShowFileTreeModal] = useState(false);
+  const [localSelectedFiles, setLocalSelectedFiles] = useState<string[]>(selectedFiles);
+  // Estado para el modal de selector de repositorios
+  const [showRepoModal, setShowRepoModal] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Procesa la siguiente instrucción en la cola
   useEffect(() => {
     if (!isMounted || isGenerating || cola.length === 0) return;
     const siguiente = cola[0];
@@ -79,10 +101,8 @@ export const AIInteraction: React.FC<AIInteractionProps> = ({
       { method: 'post', action: '/api/ai', encType: 'application/json' }
     );
     setProcesando(cola.length);
-    // eslint-disable-next-line
   }, [cola, isMounted]);
 
-  // Maneja la respuesta de la IA
   useEffect(() => {
     if (!isGenerating || !aiFetcher.data) return;
     const siguiente = cola[0];
@@ -102,8 +122,60 @@ export const AIInteraction: React.FC<AIInteractionProps> = ({
     setCola(prev => prev.slice(1));
     setIsGenerating(false);
     setProcesando(prev => prev - 1);
-    // eslint-disable-next-line
   }, [aiFetcher.data]);
+
+  useEffect(() => {
+    if (reposFetcher.data) {
+      setRepos(reposFetcher.data);
+    }
+  }, [reposFetcher.data]);
+
+  useEffect(() => {
+    if (analyzeRepoFetcher.data && 'files' in analyzeRepoFetcher.data) {
+      setShowRepoSelector(false);
+      setSelectedRepo("");
+    }
+  }, [analyzeRepoFetcher.data]);
+
+  const promptFullstack = `Genera un README general del proyecto [markdown]\nGenera un diagrama de arquitectura [mermaid]\nGenera una guía de QA [word]`;
+  const promptBackend = `Genera la documentación técnica del backend [markdown]\nGenera un diagrama ERD [mermaid]`;
+  const promptFrontend = `Genera la documentación técnica del frontend [markdown]\nGenera una guía de QA para frontend [word]`;
+
+  const handleDocs = (prompt: string) => {
+    setPrompt(prompt);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setZip(file);
+    if (file && e.currentTarget.form) {
+      const formData = new FormData(e.currentTarget.form);
+      aiFetcher.submit(formData, {
+        method: "post",
+        action: "/api/upload",
+        encType: "multipart/form-data"
+      });
+    }
+  };
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const fetchRepos = () => {
+    setShowRepoSelector(true);
+    reposFetcher.load("/api/github-repos");
+  };
+
+  const handleRepoSelect = (repo: string) => {
+    setSelectedRepo(repo);
+    onError("");
+    if (!repo) return;
+    analyzeRepoFetcher.submit(
+      { repo },
+      { method: 'post', action: '/api/analyze-github-repo', encType: 'application/json' }
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -128,88 +200,169 @@ export const AIInteraction: React.FC<AIInteractionProps> = ({
     setPrompt("");
   };
 
-  // Prompts rápidos
-  const promptFullstack = `Genera un README general del proyecto [markdown]\nGenera un diagrama de arquitectura [mermaid]\nGenera una guía de QA [word]`;
-  const promptBackend = `Genera la documentación técnica del backend [markdown]\nGenera un diagrama ERD [mermaid]`;
-  const promptFrontend = `Genera la documentación técnica del frontend [markdown]\nGenera una guía de QA para frontend [word]`;
+  // Handler para guardar selección del modal
+  const handleSaveSelectedFiles = () => {
+    onSelectedFilesChange(localSelectedFiles);
+    setShowFileTreeModal(false);
+  };
 
-  const handleDocs = (prompt: string) => {
-    setPrompt(prompt);
+  // Handler para abrir modal solo si hay archivos
+  const handleBannerClick = () => {
+    if (files.length > 0) setShowFileTreeModal(true);
+  };
+
+  const handleOpenRepoModal = () => {
+    setShowRepoModal(true);
+    reposFetcher.load("/api/github-repos");
   };
 
   return (
-    <Card title="Interactúa con la IA">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <label className="font-medium text-base flex items-center gap-2 relative group">
-          Instrucción
-          <span className="relative inline-block">
-            <div className="relative inline-block">
-              <span
-                className="cursor-pointer text-accent rounded-full w-5 h-5 flex items-center justify-center bg-panel"
-                tabIndex={0}
-              >
-                <FiInfo size={18} />
-              </span>
-              <TooltipInfo />
+    <div className="w-full flex flex-col min-h-[60vh] bg-transparent">
+      {/* Saludo */}
+      <div className="mb-6 w-full text-start">
+        <h2 className="text-3xl font-extrabold text-gray-900 mb-1">Hola {userName},</h2>
+        <h3 className="text-xl font-semibold text-gray-600">¿Cómo te podemos ayudar?</h3>
+      </div>
+      {/* Caja de interacción */}
+      <div className="w-full flex flex-col items-center">
+        <form onSubmit={handleSubmit} className="relative w-full max-w-2xl">
+          <div className="relative">
+            <textarea
+              name="prompt"
+              className="w-full bg-gray-100 border border-gray-300 rounded-xl p-4 pb-12 text-base h-28 resize-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition"
+              value={prompt}
+              onChange={e => setPrompt(e.target.value)}
+              required
+              rows={5}
+              placeholder="Realiza tu instrucción..."
+              style={{ minHeight: 112 }}
+            />
+            {/* Contenedor flotante de botones dentro del textarea */}
+            <div className="absolute left-3 bottom-3 flex gap-2 pointer-events-none z-10">
+              <div className="flex gap-2 pointer-events-auto">
+                <FileUpload
+                  user={user}
+                  files={files}
+                  extractPath={extractPath}
+                  selectedFiles={selectedFiles}
+                  onFilesChange={onFilesChange}
+                  onExtractPathChange={onExtractPathChange}
+                  onSelectedFilesChange={onSelectedFilesChange}
+                  onError={onError}
+                  minimal={true}
+                  buttonComponent={Button}
+                  buttonProps={{ variant: 'input', size: 'sm', icon: 'settings', className: 'whitespace-nowrap flex items-center' }}
+                  onBannerClick={() => setShowFileTreeModal(true)}
+                />
+                <Button
+                  type="button"
+                  variant="input"
+                  size="sm"
+                  icon="settings"
+                  onClick={handleOpenRepoModal}
+                  className="whitespace-nowrap flex items-center"
+                >
+                  Subir desde Github
+                </Button>
+              </div>
             </div>
-          </span>
-        </label>
-        <div className="flex flex-col sm:flex-row gap-2 mb-2">
-          <Button 
+            {/* Botón enviar a la IA (solo icono) */}
+            <button
+              type="submit"
+              disabled={isGenerating || !extractPath || !prompt}
+              className="absolute right-3 bottom-3 bg-gray-200 text-gray-700 rounded-full p-1 font-bold hover:bg-gray-300 transition flex items-center justify-center shadow-none"
+              style={{ width: 28, height: 28 }}
+              aria-label="Enviar a IA"
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M3 20l18-8-18-8v7l15 1-15 1v7z" fill="#6c6f80"/></svg>
+            </button>
+          </div>
+        </form>
+        {/* Botones de documentación automática debajo del input */}
+        <div className="w-full max-w-2xl flex flex-col gap-2 mt-3">
+          <button
             type="button"
-            className="btn btn-primary"
+            className="w-full border border-gray-300 bg-white text-gray-700 rounded px-3 py-2 text-sm font-medium hover:bg-gray-100 transition"
             onClick={() => handleDocs(promptFullstack)}
             disabled={isGenerating || !extractPath}
           >
-            Documentación Backend y Frontend
-          </Button>
-          <Button 
+            Realizar documentación por defecto
+          </button>
+          <button
             type="button"
-            className="btn btn-primary"
-            onClick={() => handleDocs(promptBackend)}
-            disabled={isGenerating || !extractPath}
-          >
-            Documentación Solo Backend
-          </Button>
-          <Button 
-            type="button"
-            className="btn btn-primary"
+            className="w-full border border-gray-300 bg-white text-gray-700 rounded px-3 py-2 text-sm font-medium hover:bg-gray-100 transition"
             onClick={() => handleDocs(promptFrontend)}
             disabled={isGenerating || !extractPath}
           >
-            Documentación Solo Frontend
-          </Button>
+            Realizar documentación por defecto solo para front end
+          </button>
+          <button
+            type="button"
+            className="w-full border border-gray-300 bg-white text-gray-700 rounded px-3 py-2 text-sm font-medium hover:bg-gray-100 transition"
+            onClick={() => handleDocs(promptBackend)}
+            disabled={isGenerating || !extractPath}
+          >
+            Realizar documentación por defecto solo para back end
+          </button>
         </div>
-        <textarea
-          name="prompt"
-          className="w-full mt-1.5 bg-bg text-text border border-border rounded-md p-2.5 text-base mb-0 h-32 resize-none overflow-y-auto focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-          value={prompt}
-          onChange={e => setPrompt(e.target.value)}
-          required
-          rows={5}
-          placeholder="Escribe tus instrucciones aquí. Haz clic en el ícono de información para ver ejemplos y formatos."
-        />
-        <Button 
-          type="submit" 
-          disabled={isGenerating || !extractPath || !prompt}
-          className="btn btn-primary"
-        >
-          {isGenerating ? 'Generando...' : 'Enviar a IA'}
-        </Button>
-      </form>
-      {aiFetcher.data?.error && (
-        <Alert type="error" message={aiFetcher.data.error} />
-      )}
-      {isGenerating && (
-        <div className="mt-4">
-          <Loader />
-          {cola.length > 0 && (
-            <div className="mt-2 text-sm text-text-secondary">
-              Procesando archivos: {procesando} de {cola.length + procesando}
+        {/* Banner del archivo ZIP seleccionado */}
+        {zip && (
+          <div className="w-full max-w-2xl mb-4 cursor-pointer bg-blue-50 border border-blue-200 rounded px-4 py-2 text-blue-800 font-medium flex items-center justify-between" onClick={handleBannerClick}>
+            <span>{zip.name}</span>
+            <span className="text-xs text-blue-500 underline ml-2">Ver archivos</span>
+          </div>
+        )}
+        {/* Modal del árbol de archivos */}
+        <Modal open={showFileTreeModal} onClose={() => setShowFileTreeModal(false)} title="Selecciona archivos">
+          <div className="max-h-72 overflow-y-auto border rounded p-2 mb-4">
+            <FileTree files={files} selectedFiles={localSelectedFiles} onFileSelect={file => {
+              setLocalSelectedFiles(prev => prev.includes(file) ? prev.filter(f => f !== file) : [...prev, file]);
+            }} />
+          </div>
+          <div className="flex justify-end gap-2">
+            <button className="px-4 py-2 rounded border border-gray-300 bg-white text-gray-800 hover:bg-gray-100" onClick={()=>setShowFileTreeModal(false)}>Cancelar</button>
+            <button className="px-4 py-2 rounded bg-accent text-white font-bold hover:bg-blue-700" onClick={handleSaveSelectedFiles}>Guardar seleccionados</button>
+          </div>
+        </Modal>
+        {/* Modal del selector de repositorios de GitHub */}
+        <Modal open={showRepoModal} onClose={() => setShowRepoModal(false)} title="Selecciona un repositorio de GitHub">
+          <div className="flex flex-col gap-3">
+            <label className="font-medium text-base">Selecciona un repositorio:</label>
+            <select
+              value={selectedRepo}
+              onChange={e => handleRepoSelect(e.target.value)}
+              className="w-full bg-white text-gray-800 border border-gray-300 rounded-md p-2"
+            >
+              <option value="">-- Selecciona --</option>
+              {Array.isArray(repos) && repos.map((repo: any) => (
+                <option key={repo.id} value={repo.full_name}>{repo.full_name}</option>
+              ))}
+            </select>
+            <div className="flex justify-end gap-2 mt-2">
+              <button
+                type="button"
+                className="border border-gray-300 bg-white text-gray-800 rounded px-3 py-1.5 text-sm font-medium hover:bg-gray-100 transition"
+                onClick={() => setShowRepoModal(false)}
+              >
+                Cancelar
+              </button>
             </div>
-          )}
-        </div>
-      )}
-    </Card>
+          </div>
+        </Modal>
+        {aiFetcher.data?.error && (
+          <Alert type="error" message={aiFetcher.data.error} />
+        )}
+        {isGenerating && (
+          <div className="mt-4">
+            <Loader />
+            {cola.length > 0 && (
+              <div className="mt-2 text-sm text-gray-500">
+                Procesando archivos: {procesando} de {cola.length + procesando}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }; 

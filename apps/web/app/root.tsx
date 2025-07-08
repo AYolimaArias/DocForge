@@ -6,6 +6,7 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import type { LinksFunction } from "@remix-run/node";
+// @ts-ignore
 import stylesheet from "./tailwind.css?url";
 
 export const links: LinksFunction = () => [
@@ -24,7 +25,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className="bg-gradient-to-br from-bg to-[#1e293b] text-text font-['Inter']">
+      <body className="font-['Inter']">
         <Outlet />
         <ScrollRestoration />
         <Scripts />

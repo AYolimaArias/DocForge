@@ -24,6 +24,7 @@
     "bcryptjs": "^3.0.2",
     "docx": "^9.5.1",
     "file-saver": "^2.0.5",
+    "googleapis": "^150.0.1",
     "gpt-tokenizer": "^3.0.1",
     "html-docx-js": "^0.3.1",
     "isbot": "^5.1.9",

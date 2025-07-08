@@ -19,28 +19,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onDocumentoSelect,
 }) => {
   return (
-    <div className="fixed top-0 left-0 h-full w-72 bg-background-secondary p-6 flex flex-col justify-between border-r border-border">
+    <div className="min-h-screen w-72 bg-[#181a20] p-6 flex flex-col justify-between">
       <div>
-        <h1 className="text-accent font-extrabold text-4xl tracking-tighter mb-8">
-          docForge
-        </h1>
-
+        <h1 className="text-white font-extrabold text-3xl tracking-tight mb-8">Codeable</h1>
         <Button
           onClick={onNuevoProyecto}
           icon="refresh"
-          className="w-full mb-8"
+          className="w-full mb-8 bg-accent text-white rounded-md py-2 font-semibold text-base hover:bg-blue-700 transition"
         >
           Nuevo proyecto
         </Button>
-
         <div className="mb-8">
-          <h2 className="text-xl mb-4 text-text">
-            Documentos generados
-          </h2>
+          <h2 className="text-lg mb-4 text-white font-semibold">Documentos generados</h2>
           {documentos.length === 0 ? (
-            <p className="text-text-secondary text-sm">
-              Aún no has generado documentos.
-            </p>
+            <p className="text-gray-400 text-sm">Aún no has generado documentos.</p>
           ) : (
             <div className="flex flex-col gap-2">
               {documentos.map((doc) => (
@@ -48,8 +40,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={doc.id}
                   className={`w-full text-left text-sm rounded-md py-2 px-3 transition-colors ${
                     docSeleccionado === doc 
-                      ? 'bg-accent-light text-accent' 
-                      : 'text-text hover:bg-white/10'
+                      ? 'bg-accent text-white font-bold' 
+                      : 'text-white hover:bg-[#23262f]'
                   }`}
                   onClick={() => onDocumentoSelect(doc)}
                 >
@@ -60,9 +52,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
       </div>
-
       {/* Panel de inicio de sesión en la parte inferior */}
-      <div className="mt-auto border-t border-border pt-4">
+      <div className="mt-auto border-t border-[#23262f] pt-4">
         {user ? (
           <div className="flex items-center gap-3">
             <img
@@ -70,25 +61,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
               width={32}
               height={32}
               alt={user.name || 'Avatar de usuario'}
-              className="rounded-full"
+              className="rounded-full border border-[#23262f]"
             />
             <div className="flex-1">
-              <p className="text-text text-sm m-0">{user.name}</p>
+              <p className="text-white text-sm m-0 font-semibold">{user.name}</p>
             </div>
             <Form action="/logout" method="post">
-              <Button size="sm">
-                Salir
-              </Button>
+              <Button size="sm" className="bg-[#23262f] text-white border border-[#23262f] hover:bg-[#313442]">Salir</Button>
             </Form>
           </div>
         ) : (
           <Form action="/auth/github" method="post">
-            <Button icon="github" className="w-full">
-              Iniciar sesión con GitHub
-            </Button>
+            <Button icon="github" className="w-full bg-accent text-white">Iniciar sesión con GitHub</Button>
           </Form>
         )}
       </div>
     </div>
   );
-}; 
+} 

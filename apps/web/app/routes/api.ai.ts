@@ -2,6 +2,8 @@ import { json, type ActionFunctionArgs } from "@remix-run/node";
 import path from "path";
 import { readdir, stat, readFile } from "fs/promises";
 import { ChatOpenAI } from "@langchain/openai";
+import { getSession } from "../services/session.server";
+import { uploadFileToDrive } from "../services/googleDrive.server";
 
 // Configuración de límites de tokens
 const MAX_TOKENS_PER_REQUEST = 4096; // Límite de contexto para gpt-3.5-turbo
@@ -170,6 +172,44 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const summaryPrompt = `Por favor, resume y consolida la siguiente documentación generada en partes. Mantén el formato de separadores ---ARCHIVO: nombre.ext--- si los hay:\n\n${finalResult}`;
       finalResult = await processChunkWithAI('', summaryPrompt, llm);
     }
+
+    // --- INTEGRACIÓN GOOGLE DRIVE ---
+    // Extraer archivos del resultado
+    const archivoRegex = /---ARCHIVO: ([^\n]+)---\n([\s\S]*?)(?=(---ARCHIVO: |$))/g;
+    let match;
+    const archivos: { nombre: string, contenido: string }[] = [];
+    while ((match = archivoRegex.exec(finalResult)) !== null) {
+      archivos.push({ nombre: match[1].trim(), contenido: match[2].trim() });
+    }
+
+    // Obtener token de Google del usuario
+    const session = await getSession(request);
+    const googleToken = session.get("googleToken");
+
+    // Subir solo Word, Excel, PDF
+    if (googleToken) {
+      for (const archivo of archivos) {
+        const ext = path.extname(archivo.nombre).toLowerCase();
+        let mimeType = null;
+        if (ext === ".docx") mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        if (ext === ".pdf") mimeType = "application/pdf";
+        if (ext === ".xlsx") mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        if (mimeType) {
+          // Subir a Google Drive
+          try {
+            await uploadFileToDrive({
+              accessToken: googleToken,
+              fileName: archivo.nombre,
+              mimeType,
+              buffer: Buffer.from(archivo.contenido, 'utf-8'),
+            });
+          } catch (e) {
+            console.error(`Error subiendo ${archivo.nombre} a Google Drive:`, e);
+          }
+        }
+      }
+    }
+    // --- FIN INTEGRACIÓN GOOGLE DRIVE ---
 
     return json({ message: finalResult });
 

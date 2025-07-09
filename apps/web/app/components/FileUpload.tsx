@@ -138,13 +138,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             {zip ? zip.name : "Subir repositorio"}
           </ButtonComponent>
         </uploadFetcher.Form>
-        {zip && (
-          <div className={`w-full mb-2 bg-blue-50 border border-blue-200 rounded px-4 py-2 text-blue-800 font-medium flex items-center justify-between ${onBannerClick ? 'cursor-pointer hover:bg-blue-100 transition' : ''}`}
-            onClick={onBannerClick}
-          >
-            <span>{zip.name}</span>
-          </div>
-        )}
         {uploadFetcher.data?.error && (
           <Alert type="error" message={uploadFetcher.data.error} />
         )}

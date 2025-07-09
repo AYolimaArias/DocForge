@@ -227,10 +227,27 @@ export const AIInteraction: React.FC<AIInteractionProps> = ({
         <h3 className="text-xl font-semibold text-gray-600">¿Cómo te podemos ayudar?</h3>
       </div>
         <form onSubmit={handleSubmit} className="relative w-full">
+          {/* Banner del archivo/proyecto seleccionado */}
+          {files.length > 0 && (
+            <div className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-lg shadow-sm px-4 py-2 mb-3">
+              <div className="flex items-center gap-2 cursor-pointer" onClick={handleBannerClick} tabIndex={0} role="button" aria-label="Ver archivos del proyecto">
+                <span className="inline-block w-4 h-4 rounded-full bg-gray-400" />
+                <span className="font-medium text-gray-800 truncate max-w-[220px]">{files[0]}</span>
+              </div>
+              <button
+                type="button"
+                className="ml-2 text-gray-400 hover:text-gray-700 text-lg font-bold rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-accent"
+                onClick={e => { e.stopPropagation(); setFiles([]); setExtractPath(''); setSelectedFiles([]); }}
+                aria-label="Eliminar archivo"
+              >
+                &times;
+              </button>
+            </div>
+          )}
           <div className="relative">
             <textarea
               name="prompt"
-              className="w-full bg-gray-100 border border-gray-300 rounded-xl p-4 pb-12 text-base h-28 resize-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition"
+              className="w-full bg-gray-100 border border-gray-300 rounded-xl p-4 pb-12 text-base h-28 resize-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition mt-2"
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
               required
@@ -304,13 +321,6 @@ export const AIInteraction: React.FC<AIInteractionProps> = ({
             Realizar documentación por defecto solo para back end
           </button>
         </div>
-        {/* Banner del archivo ZIP seleccionado */}
-        {zip && (
-          <div className="w-full max-w-2xl mb-4 cursor-pointer bg-blue-50 border border-blue-200 rounded px-4 py-2 text-blue-800 font-medium flex items-center justify-between" onClick={handleBannerClick}>
-            <span>{zip.name}</span>
-            <span className="text-xs text-blue-500 underline ml-2">Ver archivos</span>
-          </div>
-        )}
         {/* Modal del árbol de archivos */}
         <Modal open={showFileTreeModal} onClose={() => setShowFileTreeModal(false)} title="Selecciona archivos">
           <div className="max-h-72 overflow-y-auto border rounded p-2 mb-4">

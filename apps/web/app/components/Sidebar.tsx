@@ -19,29 +19,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onDocumentoSelect,
 }) => {
   return (
-    <div className="min-h-screen w-72 bg-[#181a20] p-6 flex flex-col justify-between">
-      <div>
-        <h1 className="text-white font-extrabold text-3xl tracking-tight mb-8">Codeable</h1>
+    <div className="min-h-screen w-72 bg-[#181a20] p-6 flex flex-col justify-between items-center">
+      <div className="w-full flex flex-col items-center">
+        {/* Logo */}
+        <h1 className="text-white font-extrabold text-3xl tracking-tight mb-8 w-full text-left">Codeable</h1>
+        {/* Botón nuevo proyecto */}
         <Button
           onClick={onNuevoProyecto}
           icon="refresh"
-          className="w-full mb-8 bg-accent text-white rounded-md py-2 font-semibold text-base hover:bg-blue-700 transition"
+          className="w-full mb-8 bg-gray-200 text-gray-800 rounded-xl py-3 font-semibold text-base hover:bg-gray-300 transition border-0"
         >
-          Nuevo proyecto
+          Nuevo Proyecto
         </Button>
-        <div className="mb-8">
-          <h2 className="text-lg mb-4 text-white font-semibold">Documentos generados</h2>
+        {/* Historial */}
+        <div className="w-full">
+          <h2 className="text-xs font-bold text-gray-300 uppercase mb-3 tracking-widest">Historial</h2>
           {documentos.length === 0 ? (
             <p className="text-gray-400 text-sm">Aún no has generado documentos.</p>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               {documentos.map((doc) => (
                 <button
                   key={doc.id}
-                  className={`w-full text-left text-sm rounded-md py-2 px-3 transition-colors ${
-                    docSeleccionado === doc 
-                      ? 'bg-accent text-white font-bold' 
-                      : 'text-white hover:bg-[#23262f]'
+                  className={`w-full rounded-xl bg-gray-200 text-gray-800 py-3 px-4 text-base font-medium text-center transition-colors ${
+                    docSeleccionado === doc
+                      ? 'ring-2 ring-accent font-bold' : 'hover:bg-gray-300'
                   }`}
                   onClick={() => onDocumentoSelect(doc)}
                 >
@@ -53,9 +55,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
       {/* Panel de inicio de sesión en la parte inferior */}
-      <div className="mt-auto border-t border-[#23262f] pt-4">
+      <div className="mt-auto w-full pt-4 flex flex-col items-center">
         {user ? (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full">
             <img
               src={user.avatar_url || ''}
               width={32}

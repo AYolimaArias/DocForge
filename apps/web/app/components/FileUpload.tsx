@@ -141,7 +141,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         {uploadFetcher.data?.error && (
           <Alert type="error" message={uploadFetcher.data.error} />
         )}
-        {(isUploading) && <Loader />}
       </div>
     );
   }

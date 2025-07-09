@@ -237,7 +237,7 @@ export const AIInteraction: React.FC<AIInteractionProps> = ({
               <button
                 type="button"
                 className="ml-2 text-gray-400 hover:text-gray-700 text-lg font-bold rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-accent"
-                onClick={e => { e.stopPropagation(); setFiles([]); setExtractPath(''); setSelectedFiles([]); }}
+                onClick={e => { e.stopPropagation(); onFilesChange([]); onExtractPathChange(''); onSelectedFilesChange([]); }}
                 aria-label="Eliminar archivo"
               >
                 &times;

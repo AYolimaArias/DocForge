@@ -218,14 +218,15 @@ export const AIInteraction: React.FC<AIInteractionProps> = ({
 
   return (
     <div className="w-full flex flex-col min-h-[60vh] bg-transparent">
-      {/* Saludo */}
-      <div className="mb-6 w-full text-start">
+
+      {/* Caja de interacción */}
+      <div className="w-full flex flex-col items-center justify-center max-w-3xl">
+              {/* Saludo */}
+      <div className="mb-6 w-full ">
         <h2 className="text-3xl font-extrabold text-gray-900 mb-1">Hola {userName},</h2>
         <h3 className="text-xl font-semibold text-gray-600">¿Cómo te podemos ayudar?</h3>
       </div>
-      {/* Caja de interacción */}
-      <div className="w-full flex flex-col items-center">
-        <form onSubmit={handleSubmit} className="relative w-full max-w-2xl">
+        <form onSubmit={handleSubmit} className="relative w-full">
           <div className="relative">
             <textarea
               name="prompt"
@@ -238,8 +239,8 @@ export const AIInteraction: React.FC<AIInteractionProps> = ({
               style={{ minHeight: 112 }}
             />
             {/* Contenedor flotante de botones dentro del textarea */}
-            <div className="absolute left-3 bottom-3 flex gap-2 pointer-events-none z-10">
-              <div className="flex gap-2 pointer-events-auto">
+            <div className="absolute left-3 right-3 bottom-3 flex items-center justify-between pointer-events-none z-10">
+              <div className="flex gap-2 pointer-events-auto items-center">
                 <FileUpload
                   user={user}
                   files={files}
@@ -265,24 +266,22 @@ export const AIInteraction: React.FC<AIInteractionProps> = ({
                   Subir desde Github
                 </Button>
               </div>
+              <button
+                type="submit"
+                disabled={isGenerating || !extractPath || !prompt}
+                className="pointer-events-auto bg-gray-200 text-gray-700 rounded-full p-1 font-bold hover:bg-gray-300 transition flex items-center justify-center shadow-none h-8 w-8"
+                aria-label="Enviar a IA"
+              >
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M3 20l18-8-18-8v7l15 1-15 1v7z" fill="#6c6f80"/></svg>
+              </button>
             </div>
-            {/* Botón enviar a la IA (solo icono) */}
-            <button
-              type="submit"
-              disabled={isGenerating || !extractPath || !prompt}
-              className="absolute right-3 bottom-3 bg-gray-200 text-gray-700 rounded-full p-1 font-bold hover:bg-gray-300 transition flex items-center justify-center shadow-none"
-              style={{ width: 28, height: 28 }}
-              aria-label="Enviar a IA"
-            >
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M3 20l18-8-18-8v7l15 1-15 1v7z" fill="#6c6f80"/></svg>
-            </button>
           </div>
         </form>
         {/* Botones de documentación automática debajo del input */}
-        <div className="w-full max-w-2xl flex flex-col gap-2 mt-3">
+        <div className="w-full flex flex-col gap-2 mt-3">
           <button
             type="button"
-            className="w-full border border-gray-300 bg-white text-gray-700 rounded px-3 py-2 text-sm font-medium hover:bg-gray-100 transition"
+            className="text-start w-full border border-gray-300 bg-white text-gray-700 rounded px-3 py-2 text-sm font-medium hover:bg-gray-100 transition"
             onClick={() => handleDocs(promptFullstack)}
             disabled={isGenerating || !extractPath}
           >
@@ -290,7 +289,7 @@ export const AIInteraction: React.FC<AIInteractionProps> = ({
           </button>
           <button
             type="button"
-            className="w-full border border-gray-300 bg-white text-gray-700 rounded px-3 py-2 text-sm font-medium hover:bg-gray-100 transition"
+            className="text-start w-full border border-gray-300 bg-white text-gray-700 rounded px-3 py-2 text-sm font-medium hover:bg-gray-100 transition"
             onClick={() => handleDocs(promptFrontend)}
             disabled={isGenerating || !extractPath}
           >
@@ -298,7 +297,7 @@ export const AIInteraction: React.FC<AIInteractionProps> = ({
           </button>
           <button
             type="button"
-            className="w-full border border-gray-300 bg-white text-gray-700 rounded px-3 py-2 text-sm font-medium hover:bg-gray-100 transition"
+            className="text-start w-full border border-gray-300 bg-white text-gray-700 rounded px-3 py-2 text-sm font-medium hover:bg-gray-100 transition"
             onClick={() => handleDocs(promptBackend)}
             disabled={isGenerating || !extractPath}
           >

@@ -118,8 +118,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   if (minimal) {
     return (
-      <div className="w-full flex flex-col items-center">
-        <uploadFetcher.Form method="post" action="/api/upload" encType="multipart/form-data" className="w-full flex flex-row gap-2 mb-2" onSubmit={e => e.preventDefault()}>
+      <div className="flex flex-row items-center gap-2 w-full">
+        <uploadFetcher.Form method="post" action="/api/upload" encType="multipart/form-data" className="w-full flex flex-row gap-2" onSubmit={e => e.preventDefault()}>
           <input
             type="file"
             accept=".zip"

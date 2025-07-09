@@ -56,20 +56,22 @@ export default function Index() {
       onNuevoProyecto={handleNuevoProyecto}
       onDocumentoSelect={setDocSeleccionado}
     >
-      <div className="w-full max-w-4xl mx-auto mt-24">
-        <AIInteraction
-          extractPath={extractPath}
-          selectedFiles={selectedFiles}
-          onDocumentoGenerado={handleDocumentoGenerado}
-          onError={setError}
-          userName={user.name || "Usuario"}
-          files={files}
-          onFilesChange={setFiles}
-          onExtractPathChange={setExtractPath}
-          onSelectedFilesChange={setSelectedFiles}
-          user={user}
-        />
-        <DocumentPreview documento={docSeleccionado} />
+      <div className="w-full min-h-screen flex flex-col justify-center items-center">
+        <div className="w-full max-w-3xl">
+          <AIInteraction
+            extractPath={extractPath}
+            selectedFiles={selectedFiles}
+            onDocumentoGenerado={handleDocumentoGenerado}
+            onError={setError}
+            userName={user.name || "Usuario"}
+            files={files}
+            onFilesChange={setFiles}
+            onExtractPathChange={setExtractPath}
+            onSelectedFilesChange={setSelectedFiles}
+            user={user}
+          />
+          <DocumentPreview documento={docSeleccionado} />
+        </div>
       </div>
     </Layout>
   );

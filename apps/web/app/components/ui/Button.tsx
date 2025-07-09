@@ -50,7 +50,7 @@ export const Button: React.FC<ButtonProps> = ({
       `}
       {...props}
     >
-      {IconComponent && <IconComponent size={18} className="text-gray-800" />}
+      {IconComponent && <IconComponent size={size === 'sm' ? 15 : 20} className="text-gray-800" />}
       {typeof icon === 'object' && icon}
       {children}
     </button>
